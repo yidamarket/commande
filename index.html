@@ -1,0 +1,1546 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Livreurs · Gestion complète</title>
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚚</text></svg>">
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Leaflet pour la carte -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Signature Pad -->
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, sans-serif;
+        }
+        body {
+            background: #e9eff5;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 16px;
+        }
+        .app-container {
+            max-width: 1400px;
+            width: 100%;
+            background: white;
+            border-radius: 40px;
+            padding: 24px 20px;
+            box-shadow: 0 30px 50px rgba(0,0,0,0.1);
+        }
+        .login-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .login-box {
+            background: #f5faff;
+            border-radius: 30px;
+            padding: 40px;
+            max-width: 400px;
+            width: 90%;
+            margin: 0 auto;
+        }
+        .login-box h2 {
+            color: #1d4a72;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .login-input {
+            width: 100%;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            border: 2px solid #b9cfe6;
+            border-radius: 40px;
+            font-size: 1rem;
+            outline: none;
+        }
+        .login-btn {
+            width: 100%;
+            padding: 15px;
+            background: #2f6d9e;
+            color: white;
+            border: none;
+            border-radius: 40px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .user-info-bar {
+            background: #d4e3fd;
+            border-radius: 40px;
+            padding: 12px 20px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .logout-btn {
+            background: #e05a5a;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 30px;
+            cursor: pointer;
+        }
+        .admin-section {
+            background: #fff3e0;
+            border-radius: 30px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 2px solid #ffb74d;
+        }
+        .admin-section h3 {
+            color: #e65100;
+            margin-bottom: 20px;
+        }
+        .user-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .user-card {
+            background: white;
+            border-radius: 20px;
+            padding: 15px;
+            border: 1px solid #ffb74d;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .user-info {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .user-name {
+            font-weight: 700;
+            color: #1d4a72;
+        }
+        .user-type {
+            font-size: 0.8rem;
+            padding: 3px 8px;
+            border-radius: 20px;
+            display: inline-block;
+            width: fit-content;
+        }
+        .user-type.administrateur { background: #ffebee; color: #c62828; }
+        .user-type.preparateur { background: #e8f5e9; color: #2e7d32; }
+        .user-type.chauffeur { background: #e3f2fd; color: #1565c0; }
+        .delete-user {
+            background: #ff5252;
+            color: white;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        .add-user-form {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: flex-end;
+        }
+        .add-user-field {
+            flex: 1;
+            min-width: 200px;
+        }
+        .add-user-field label {
+            display: block;
+            font-size: 0.8rem;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        .add-user-field input, .add-user-field select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #b9cfe6;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+        .btn-add-user {
+            background: #2f6d9e;
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 30px;
+            font-weight: 700;
+            cursor: pointer;
+            height: 42px;
+        }
+        .tabs-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .tab-btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 40px;
+            font-weight: 700;
+            cursor: pointer;
+            background: #edf2f9;
+            color: #1e3f5c;
+            flex: 1;
+            min-width: 120px;
+        }
+        .tab-btn.active {
+            background: #2f6d9e;
+            color: white;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .main-layout {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .left-panel {
+            flex: 2;
+        }
+        .right-panel {
+            flex: 1;
+        }
+        .map-container {
+            background: #f5faff;
+            border-radius: 30px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        #map {
+            height: 400px;
+            border-radius: 20px;
+            z-index: 1;
+        }
+        .section-card {
+            background: #f5faff;
+            border-radius: 30px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .section-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #1d4a72;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .input-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .input-field {
+            background: white;
+            border-radius: 24px;
+            padding: 4px 20px;
+            border: 1px solid #b9cfe6;
+            flex: 1;
+            min-width: 200px;
+        }
+        .input-field input, .input-field select, .input-field textarea {
+            width: 100%;
+            padding: 14px 0;
+            border: none;
+            outline: none;
+            background: transparent;
+            font-family: inherit;
+        }
+        .input-field textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+        .btn-add {
+            background: #2f6d9e;
+            color: white;
+            border: none;
+            padding: 14px 25px;
+            border-radius: 34px;
+            font-weight: 700;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .btn-edit {
+            background: #ff9f4b;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        .btn-validate {
+            background: #2b8c5e;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 30px;
+            cursor: pointer;
+        }
+        .btn-delete {
+            background: transparent;
+            border: 1px solid #d0ddee;
+            padding: 8px 16px;
+            border-radius: 30px;
+            cursor: pointer;
+        }
+        .btn-delete:hover {
+            background: #ff5252;
+            color: white;
+            border-color: #ff5252;
+        }
+        .items-list {
+            list-style: none;
+            padding: 0;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .order-card {
+            background: white;
+            border-radius: 20px;
+            padding: 15px;
+            margin: 10px 0;
+            border: 1px solid #c7daf0;
+            border-left: 6px solid #ff9800;
+        }
+        .order-card.en_attente { border-left-color: #ff9800; }
+        .order-card.prepare { border-left-color: #2196f3; }
+        .order-card.en_cours { border-left-color: #9c27b0; }
+        .order-card.livre { border-left-color: #4caf50; background: #e8f5e9; }
+        .task-card {
+            background: white;
+            border-radius: 20px;
+            padding: 15px;
+            margin: 10px 0;
+            border: 1px solid #c7daf0;
+        }
+        .task-card.completed {
+            background: #e8f5e9;
+            border-left: 6px solid #4caf50;
+        }
+        .transport-card {
+            background: white;
+            border-radius: 20px;
+            padding: 15px;
+            margin: 10px 0;
+            border: 1px solid #c7daf0;
+            border-left: 6px solid #ff9800;
+        }
+        .transport-card.departed {
+            background: #e8f5e9;
+            border-left-color: #4caf50;
+        }
+        .item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .customer-name {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #1d4a72;
+        }
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 30px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .status-badge.en_attente { background: #fff3e0; color: #e65100; }
+        .status-badge.prepare { background: #e3f2fd; color: #0d47a1; }
+        .status-badge.en_cours { background: #f3e5f5; color: #4a148c; }
+        .status-badge.livre { background: #c8e6c9; color: #1b5e20; }
+        .status-badge.todo { background: #fff3e0; color: #e65100; }
+        .status-badge.done { background: #c8e6c9; color: #1b5e20; }
+        .order-meta {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            font-size: 0.8rem;
+            color: #666;
+            margin: 10px 0;
+        }
+        .order-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 10px;
+        }
+        .driver-group {
+            margin-bottom: 30px;
+        }
+        .driver-group h4 {
+            color: #1d4a72;
+            margin: 20px 0 10px;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #b9cfe6;
+        }
+        .dual-date-section {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .date-card {
+            flex: 1;
+            background: #f5faff;
+            border-radius: 30px;
+            padding: 15px 20px;
+        }
+        .date-picker-input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #b9cfe6;
+            border-radius: 30px;
+        }
+        .route-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 20px 0 10px;
+        }
+        .route-header h3 {
+            color: #1d4a72;
+        }
+        .route-status {
+            background: #2f6d9e;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 30px;
+            font-size: 0.9rem;
+        }
+        .start-point {
+            background: #c8e6c9;
+            border-radius: 30px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 2px solid #4caf50;
+        }
+        .route-steps {
+            list-style: none;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .route-steps li {
+            padding: 15px;
+            margin: 10px 0;
+            background: #f8f9fc;
+            border-radius: 20px;
+            border: 1px solid #c7daf0;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #2f6d9e;
+        }
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .palette-info {
+            background: #fff3e0;
+            border-radius: 15px;
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 0.9rem;
+        }
+        .signature-canvas {
+            border: 2px solid #b9cfe6;
+            border-radius: 20px;
+            background: white;
+            width: 100%;
+            height: 200px;
+            margin-bottom: 10px;
+        }
+        .signature-actions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+        .modal-box {
+            background: white;
+            border-radius: 30px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .modal-box h3 {
+            color: #1d4a72;
+            margin-bottom: 20px;
+        }
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+        .signature-image {
+            max-width: 100%;
+            max-height: 100px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            margin-top: 10px;
+        }
+        .view-signature-btn {
+            background: #ff9f4b;
+            color: white;
+            border: none;
+            padding: 4px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+        .delayed-badge {
+            background: #b71c1c;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            margin-left: 5px;
+        }
+        .urgent-badge {
+            background: #ff5252;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            margin-left: 5px;
+        }
+        .time-estimate {
+            background: #fff3e0;
+            border-radius: 20px;
+            padding: 8px 12px;
+            font-size: 0.85rem;
+            display: inline-block;
+            margin: 5px 0;
+        }
+        .time-estimate.delayed {
+            background: #ffcdd2;
+            color: #b71c1c;
+            font-weight: bold;
+            border: 1px solid #b71c1c;
+        }
+    </style>
+</head>
+<body>
+    <!-- Interface de connexion -->
+    <div class="login-overlay" id="loginOverlay">
+        <div class="login-box">
+            <h2>🔐 Connexion</h2>
+            <div id="loginForm">
+                <input type="text" class="login-input" id="loginUsername" placeholder="Nom d'utilisateur">
+                <input type="password" class="login-input" id="loginPassword" placeholder="Mot de passe">
+                <button class="login-btn" id="loginBtn">Se connecter</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de signature -->
+    <div id="signatureModal" class="modal-overlay" style="display: none;">
+        <div class="modal-box">
+            <h3>📝 Signature client</h3>
+            <canvas id="signatureCanvas" class="signature-canvas"></canvas>
+            <div class="signature-actions">
+                <button class="btn-delete" id="clearSignatureBtn">Effacer</button>
+                <button class="btn-validate" id="saveSignatureBtn">Valider la signature</button>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-delete" id="cancelSignatureBtn">Annuler</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de visualisation signature -->
+    <div id="viewSignatureModal" class="modal-overlay" style="display: none;">
+        <div class="modal-box">
+            <h3>📝 Signature client</h3>
+            <img id="viewSignatureImage" src="" alt="Signature" style="max-width:100%; border:2px solid #b9cfe6; border-radius:20px;">
+            <div class="modal-actions">
+                <button class="btn-delete" id="closeViewSignatureBtn">Fermer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal d'édition transport -->
+    <div id="editTransportModal" class="modal-overlay" style="display: none;">
+        <div class="modal-box">
+            <h3>✏️ Modifier le transport</h3>
+            <div class="input-field" style="margin-bottom:15px;">
+                <select id="editTransportCompany">
+                    <option value="XPO">XPO</option>
+                    <option value="STEF">STEF</option>
+                    <option value="JetFreez">JetFreez</option>
+                </select>
+            </div>
+            <div class="input-field" style="margin-bottom:15px;">
+                <input type="text" id="editTransportCustomer" placeholder="Nom du client">
+            </div>
+            <div class="input-field" style="margin-bottom:15px;">
+                <input type="text" id="editTransportReference" placeholder="Référence">
+            </div>
+            <div class="modal-actions">
+                <button class="btn-delete" id="cancelEditTransportBtn">Annuler</button>
+                <button class="btn-validate" id="saveEditTransportBtn">Enregistrer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application principale -->
+    <div class="app-container" id="app" style="display: none;">
+        <div class="user-info-bar">
+            <span id="currentUserDisplay">👤 </span>
+            <span id="userTypeDisplay"></span>
+            <button class="logout-btn" id="logoutBtn">Déconnexion</button>
+        </div>
+
+        <!-- Section admin -->
+        <div class="admin-section" id="adminSection" style="display: none;">
+            <h3>👥 Gestion des utilisateurs</h3>
+            <div class="add-user-form">
+                <div class="add-user-field">
+                    <label>Nom d'utilisateur</label>
+                    <input type="text" id="newUsername" placeholder="ex: jean.dupont">
+                </div>
+                <div class="add-user-field">
+                    <label>Mot de passe</label>
+                    <input type="password" id="newPassword" placeholder="••••••••">
+                </div>
+                <div class="add-user-field">
+                    <label>Type</label>
+                    <select id="newUserType">
+                        <option value="preparateur">Préparateur</option>
+                        <option value="chauffeur">Chauffeur</option>
+                    </select>
+                </div>
+                <button class="btn-add-user" id="createUserBtn">➕ Créer</button>
+            </div>
+            <div id="userGrid" class="user-grid"></div>
+        </div>
+
+        <!-- Onglets principaux -->
+        <div class="tabs-container">
+            <button class="tab-btn active" data-tab="orders">📦 Commandes</button>
+            <button class="tab-btn" data-tab="tasks">📋 Tâches</button>
+            <button class="tab-btn" data-tab="transports">🚛 Transports</button>
+        </div>
+
+        <!-- Onglet Commandes -->
+        <div id="tab-orders" class="tab-content active">
+            <div class="dual-date-section">
+                <div class="date-card">
+                    <div class="label">📅 Date</div>
+                    <input type="date" id="inputDate" class="date-picker-input">
+                </div>
+            </div>
+            <div class="main-layout">
+                <div class="left-panel">
+                    <div class="map-container">
+                        <div class="section-title">🗺️ Carte des livraisons</div>
+                        <div id="map"></div>
+                    </div>
+                    <div class="section-card" id="addOrderSection" style="display: none;">
+                        <div class="section-title">📝 Nouvelle commande</div>
+                        <div class="input-row">
+                            <div class="input-field"><input type="text" id="customerName" placeholder="Nom du client"></div>
+                            <div class="input-field"><input type="text" id="customerAddr" placeholder="Adresse"></div>
+                        </div>
+                        <div class="input-row">
+                            <div class="input-field">
+                                <select id="driverSelect">
+                                    <option value="">Choisir un chauffeur</option>
+                                </select>
+                            </div>
+                            <div class="input-field">
+                                <select id="timeType">
+                                    <option value="fixed">Heure fixe</option>
+                                    <option value="before">Avant</option>
+                                    <option value="range">Intervalle</option>
+                                    <option value="free">Libre</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div id="timeInputContainer" class="input-row">
+                            <input type="time" id="fixedTime" value="10:00" style="width:100%; padding:14px; border-radius:24px; border:1px solid #b9cfe6;">
+                        </div>
+                        <button class="btn-add" id="addOrderBtn" style="width:100%;">➕ Ajouter la commande</button>
+                    </div>
+                    <h3>📋 Commandes par chauffeur</h3>
+                    <div id="loadingMessage" class="loading" style="display: none;">Chargement...</div>
+                    <div id="ordersByDriver"></div>
+                </div>
+                <div class="right-panel">
+                    <div class="route-header">
+                        <h3>🗺️ Itinéraire</h3>
+                        <span class="route-status" id="routeStatus">🔄 En attente</span>
+                    </div>
+                    <div id="routeOutput">
+                        <div id="startPointInfo" class="start-point">
+                            <strong>🚩 Départ:</strong> 98 Rue Anselme Rondenay, 94400 Vitry-sur-Seine
+                        </div>
+                        <ul class="route-steps" id="routeStepsList">
+                            <li style="text-align:center; color:#8899bb;">Cliquez sur "Optimiser" pour générer l'itinéraire</li>
+                        </ul>
+                    </div>
+                    <button class="btn-add" id="optimizeRouteBtn" style="background:#ff9f4b; color:#aa5f1e; margin-top:10px; width:100%;">🗺️ Optimiser l'itinéraire</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Onglet Tâches -->
+        <div id="tab-tasks" class="tab-content">
+            <div class="grid-2">
+                <div class="section-card" id="addTaskSection" style="display: none;">
+                    <div class="section-title">📋 Nouvelle tâche</div>
+                    <div class="input-row">
+                        <div class="input-field">
+                            <textarea id="taskDescription" placeholder="Description de la tâche" rows="3"></textarea>
+                        </div>
+                    </div>
+                    <div class="input-row">
+                        <div class="input-field">
+                            <select id="taskAssignee">
+                                <option value="">Choisir un responsable</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button class="btn-add" id="addTaskBtn" style="width:100%;">➕ Créer la tâche</button>
+                </div>
+                <div class="section-card" style="grid-column: span 2;">
+                    <div class="section-title">📋 Mes tâches</div>
+                    <div id="tasksList" class="items-list"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Onglet Transports -->
+        <div id="tab-transports" class="tab-content">
+            <div class="grid-2">
+                <div class="section-card" id="addTransportSection" style="display: none;">
+                    <div class="section-title">🚛 Nouveau transport</div>
+                    <div class="input-row">
+                        <div class="input-field">
+                            <select id="transportCompany">
+                                <option value="XPO">XPO</option>
+                                <option value="STEF">STEF</option>
+                                <option value="JetFreez">JetFreez</option>
+                            </select>
+                        </div>
+                        <div class="input-field">
+                            <input type="text" id="transportCustomer" placeholder="Nom du client">
+                        </div>
+                    </div>
+                    <div class="input-row">
+                        <div class="input-field">
+                            <input type="text" id="transportReference" placeholder="Référence">
+                        </div>
+                    </div>
+                    <button class="btn-add" id="addTransportBtn" style="width:100%;">➕ Ajouter le transport</button>
+                </div>
+                <div class="section-card" style="grid-column: span 2;">
+                    <div class="section-title">🚛 Liste des transports</div>
+                    <div id="transportsList" class="items-list"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // ==================== Configuration Supabase ====================
+            const SUPABASE_URL = 'https://maxjuexqflwsnucqvkdf.supabase.co';
+            const SUPABASE_KEY = 'sb_publishable_Skv1pqDmPG40gYFIDuQoGA_EUhMzXwV';
+            const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+            const USER_TYPES = { ADMIN: 'admin', PREPARATEUR: 'preparateur', CHAUFFEUR: 'chauffeur' };
+            const ORDER_STATUS = { EN_ATTENTE: 'en_attente', PREPARE: 'prepare', EN_COURS: 'en_cours', LIVRE: 'livre' };
+            const START_POINT = { address: '98 Rue Anselme Rondenay, 94400 Vitry-sur-Seine', lat: 48.7897, lon: 2.3923 };
+
+            let currentUser = null;
+            let currentUserType = null;
+            let currentDate = new Date().toISOString().split('T')[0];
+            let map = null;
+            let mapMarkers = [];
+            let signaturePad = null;
+            let currentOrderId = null;
+            let currentTransportId = null;
+
+            // Éléments DOM
+            const loginOverlay = document.getElementById('loginOverlay');
+            const appContainer = document.getElementById('app');
+            const loginUsername = document.getElementById('loginUsername');
+            const loginPassword = document.getElementById('loginPassword');
+            const loginBtn = document.getElementById('loginBtn');
+            const logoutBtn = document.getElementById('logoutBtn');
+            const currentUserDisplay = document.getElementById('currentUserDisplay');
+            const userTypeDisplay = document.getElementById('userTypeDisplay');
+            const adminSection = document.getElementById('adminSection');
+            const userGrid = document.getElementById('userGrid');
+            const inputDatePicker = document.getElementById('inputDate');
+            const loadingMessage = document.getElementById('loadingMessage');
+            const addOrderSection = document.getElementById('addOrderSection');
+            const customerName = document.getElementById('customerName');
+            const customerAddr = document.getElementById('customerAddr');
+            const driverSelect = document.getElementById('driverSelect');
+            const timeType = document.getElementById('timeType');
+            const timeInputContainer = document.getElementById('timeInputContainer');
+            const addOrderBtn = document.getElementById('addOrderBtn');
+            const optimizeBtn = document.getElementById('optimizeRouteBtn');
+            const routeStepsList = document.getElementById('routeStepsList');
+            const startPointInfo = document.getElementById('startPointInfo');
+            const routeStatus = document.getElementById('routeStatus');
+            const newUsername = document.getElementById('newUsername');
+            const newPassword = document.getElementById('newPassword');
+            const newUserType = document.getElementById('newUserType');
+            const createUserBtn = document.getElementById('createUserBtn');
+            const ordersByDriver = document.getElementById('ordersByDriver');
+
+            // Tâches
+            const addTaskSection = document.getElementById('addTaskSection');
+            const taskDescription = document.getElementById('taskDescription');
+            const taskAssignee = document.getElementById('taskAssignee');
+            const addTaskBtn = document.getElementById('addTaskBtn');
+            const tasksList = document.getElementById('tasksList');
+
+            // Transports
+            const addTransportSection = document.getElementById('addTransportSection');
+            const transportCompany = document.getElementById('transportCompany');
+            const transportCustomer = document.getElementById('transportCustomer');
+            const transportReference = document.getElementById('transportReference');
+            const addTransportBtn = document.getElementById('addTransportBtn');
+            const transportsList = document.getElementById('transportsList');
+
+            // Modals
+            const signatureModal = document.getElementById('signatureModal');
+            const signatureCanvas = document.getElementById('signatureCanvas');
+            const clearSignatureBtn = document.getElementById('clearSignatureBtn');
+            const saveSignatureBtn = document.getElementById('saveSignatureBtn');
+            const cancelSignatureBtn = document.getElementById('cancelSignatureBtn');
+            const viewSignatureModal = document.getElementById('viewSignatureModal');
+            const viewSignatureImage = document.getElementById('viewSignatureImage');
+            const closeViewSignatureBtn = document.getElementById('closeViewSignatureBtn');
+            const editTransportModal = document.getElementById('editTransportModal');
+            const editTransportCompany = document.getElementById('editTransportCompany');
+            const editTransportCustomer = document.getElementById('editTransportCustomer');
+            const editTransportReference = document.getElementById('editTransportReference');
+            const cancelEditTransportBtn = document.getElementById('cancelEditTransportBtn');
+            const saveEditTransportBtn = document.getElementById('saveEditTransportBtn');
+
+            // ==================== Fonctions globales pour les boutons onclick ====================
+            window.prepareOrder = async function(orderId) {
+                const { error } = await supabase
+                    .from('orders')
+                    .update({ status: ORDER_STATUS.PREPARE, prepared_by: currentUser, prepared_at: new Date().toISOString() })
+                    .eq('id', orderId);
+                if (!error) await loadOrders();
+            };
+
+            window.departOrder = async function(orderId) {
+                const { error } = await supabase
+                    .from('orders')
+                    .update({ status: ORDER_STATUS.EN_COURS, driver_departure_at: new Date().toISOString() })
+                    .eq('id', orderId);
+                if (!error) await loadOrders();
+            };
+
+            window.openSignatureModal = function(orderId) {
+                currentOrderId = orderId;
+                signatureModal.style.display = 'flex';
+                if (!signaturePad) initSignaturePad();
+                else signaturePad.clear();
+            };
+
+            window.completeTask = async function(taskId) {
+                const { error } = await supabase
+                    .from('tasks')
+                    .update({ completed: true, completed_at: new Date().toISOString(), completed_by: currentUser })
+                    .eq('id', taskId);
+                if (!error) await loadTasks();
+            };
+
+            window.departTransport = async function(transportId) {
+                const paletteRendu = confirm('Palettes rendues ? OK = OUI, Annuler = NON');
+                let paletteCount = 0;
+                if (!paletteRendu) {
+                    const count = prompt('Nombre de palettes non rendues:', '1');
+                    if (count === null) return;
+                    paletteCount = parseInt(count) || 1;
+                }
+                const { error } = await supabase
+                    .from('transports')
+                    .update({
+                        departed: true,
+                        departed_at: new Date().toISOString(),
+                        departed_by: currentUser,
+                        palette_rendu: paletteRendu,
+                        palette_count: paletteCount
+                    })
+                    .eq('id', transportId);
+                if (!error) await loadTransports();
+            };
+
+            window.editTransport = async function(transportId) {
+                const { data } = await supabase.from('transports').select('*').eq('id', transportId).single();
+                if (data) {
+                    currentTransportId = transportId;
+                    editTransportCompany.value = data.company;
+                    editTransportCustomer.value = data.customer || '';
+                    editTransportReference.value = data.reference || '';
+                    editTransportModal.style.display = 'flex';
+                }
+            };
+
+            window.deleteTransport = async function(transportId) {
+                if (confirm('Supprimer ce transport ?')) {
+                    const { error } = await supabase.from('transports').delete().eq('id', transportId);
+                    if (!error) await loadTransports();
+                }
+            };
+
+            window.deleteUser = async function(username) {
+                if (currentUserType !== USER_TYPES.ADMIN) return;
+                if (confirm(`Supprimer l'utilisateur ${username} ?`)) {
+                    await supabase.from('users').delete().eq('username', username);
+                    await loadUsers(); await loadDrivers(); await loadTaskAssignees();
+                }
+            };
+
+            window.viewSignature = function(signatureData) {
+                viewSignatureImage.src = signatureData;
+                viewSignatureModal.style.display = 'flex';
+            };
+
+            closeViewSignatureBtn.addEventListener('click', () => viewSignatureModal.style.display = 'none');
+
+            // ==================== Initialisation ====================
+            function setDefaultDate() {
+                const today = new Date().toISOString().split('T')[0];
+                if (inputDatePicker) inputDatePicker.value = today;
+            }
+
+            function renderTimeInput() {
+                const type = timeType.value;
+                if (type === 'fixed') {
+                    timeInputContainer.innerHTML = `<input type="time" id="fixedTime" value="10:00" style="width:100%; padding:14px; border-radius:24px; border:1px solid #b9cfe6;">`;
+                } else if (type === 'before') {
+                    timeInputContainer.innerHTML = `<input type="time" id="beforeTime" value="18:00" style="width:100%; padding:14px; border-radius:24px; border:1px solid #b9cfe6;"><span style="margin-left:10px;">avant</span>`;
+                } else if (type === 'range') {
+                    timeInputContainer.innerHTML = `<div style="display:flex; gap:5px;"><input type="time" id="rangeStart" value="09:00" style="flex:1; padding:14px; border-radius:24px; border:1px solid #b9cfe6;"><span> - </span><input type="time" id="rangeEnd" value="17:00" style="flex:1; padding:14px; border-radius:24px; border:1px solid #b9cfe6;"></div>`;
+                } else {
+                    timeInputContainer.innerHTML = `<span>Libre</span>`;
+                }
+            }
+            if (timeType) timeType.addEventListener('change', renderTimeInput);
+
+            // ==================== Connexion ====================
+            async function login(username, password) {
+                try {
+                    const { data, error } = await supabase
+                        .from('users')
+                        .select('*')
+                        .eq('username', username)
+                        .eq('password', password)
+                        .single();
+                    if (data) {
+                        currentUser = data.username;
+                        currentUserType = data.user_type;
+                        currentUserDisplay.innerText = `👤 ${currentUser}`;
+                        const typeLabels = { 'admin': 'Administrateur', 'preparateur': 'Préparateur', 'chauffeur': 'Chauffeur' };
+                        userTypeDisplay.innerText = `(${typeLabels[currentUserType]})`;
+                        loginOverlay.style.display = 'none';
+                        appContainer.style.display = 'block';
+
+                        initMap();
+
+                        const isAdmin = currentUserType === USER_TYPES.ADMIN;
+                        const canCreateOrders = isAdmin;
+                        const canCreateTransports = isAdmin || currentUserType === USER_TYPES.PREPARATEUR;
+
+                        adminSection.style.display = isAdmin ? 'block' : 'none';
+                        if (isAdmin) await loadUsers();
+
+                        addOrderSection.style.display = canCreateOrders ? 'block' : 'none';
+                        await loadDrivers();
+                        await loadOrders();
+
+                        addTaskSection.style.display = isAdmin ? 'block' : 'none';
+                        await loadTaskAssignees();
+                        await loadTasks();
+
+                        addTransportSection.style.display = canCreateTransports ? 'block' : 'none';
+                        await loadTransports();
+
+                        return true;
+                    }
+                    return false;
+                } catch (error) {
+                    console.error('Erreur de connexion:', error);
+                    return false;
+                }
+            }
+
+            loginBtn.addEventListener('click', async () => {
+                const username = loginUsername.value.trim();
+                const password = loginPassword.value.trim();
+                const success = await login(username, password);
+                if (!success) alert('Nom d\'utilisateur ou mot de passe incorrect');
+            });
+
+            loginPassword.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') loginBtn.click();
+            });
+
+            logoutBtn.addEventListener('click', () => {
+                currentUser = null; currentUserType = null;
+                appContainer.style.display = 'none';
+                loginOverlay.style.display = 'flex';
+                loginUsername.value = ''; loginPassword.value = '';
+            });
+
+            // ==================== Gestion des utilisateurs (Admin) ====================
+            async function loadUsers() {
+                const { data } = await supabase.from('users').select('*').neq('username', 'admin').order('created_at', { ascending: false });
+                if (data) renderUserGrid(data);
+            }
+
+            function renderUserGrid(users) {
+                let html = '';
+                users.forEach(user => {
+                    const typeLabel = user.user_type === 'preparateur' ? 'Préparateur' : 'Chauffeur';
+                    html += `
+                        <div class="user-card">
+                            <div class="user-info">
+                                <span class="user-name">${escapeHtml(user.username)}</span>
+                                <span class="user-type ${user.user_type}">${typeLabel}</span>
+                            </div>
+                            <button class="delete-user" onclick="deleteUser('${user.username}')">✕</button>
+                        </div>
+                    `;
+                });
+                userGrid.innerHTML = html;
+            }
+
+            createUserBtn.addEventListener('click', async () => {
+                const username = newUsername.value.trim();
+                const password = newPassword.value.trim();
+                const userType = newUserType.value;
+                if (!username || !password) return alert('Veuillez remplir tous les champs');
+                const { error } = await supabase.from('users').insert([{ username, password, user_type: userType }]);
+                if (!error) {
+                    newUsername.value = ''; newPassword.value = '';
+                    await loadUsers(); await loadDrivers(); await loadTaskAssignees();
+                }
+            });
+
+            // ==================== Gestion des chauffeurs ====================
+            async function loadDrivers() {
+                const { data } = await supabase.from('users').select('username').eq('user_type', USER_TYPES.CHAUFFEUR);
+                if (data) {
+                    driverSelect.innerHTML = '<option value="">Choisir un chauffeur</option>';
+                    data.forEach(driver => {
+                        const option = document.createElement('option');
+                        option.value = driver.username;
+                        option.textContent = driver.username;
+                        driverSelect.appendChild(option);
+                    });
+                }
+            }
+
+            // ==================== Gestion des commandes ====================
+            async function loadOrders() {
+                loadingMessage.style.display = 'block';
+                let query = supabase.from('orders').select('*').eq('date', currentDate).order('created_at', { ascending: false });
+                if (currentUserType === USER_TYPES.CHAUFFEUR) query = query.eq('driver', currentUser);
+                const { data } = await query;
+                if (data) {
+                    renderOrdersByDriver(data);
+                    updateMap(data);
+                }
+                loadingMessage.style.display = 'none';
+            }
+
+            function renderOrdersByDriver(orders) {
+                const byDriver = {};
+                orders.forEach(o => { if (!byDriver[o.driver]) byDriver[o.driver] = []; byDriver[o.driver].push(o); });
+                let html = '';
+                for (const [driver, list] of Object.entries(byDriver)) {
+                    html += `<div class="driver-group"><h4>👤 Chauffeur: ${escapeHtml(driver)}</h4>`;
+                    list.forEach(o => html += renderOrderItem(o));
+                    html += '</div>';
+                }
+                ordersByDriver.innerHTML = html || '<p>Aucune commande</p>';
+            }
+
+            function renderOrderItem(order) {
+                const timeDisplay = formatTimeRequirement(order);
+                const statusLabels = { 'en_attente': 'En attente', 'prepare': 'Préparé', 'en_cours': 'En cours', 'livre': 'Livré' };
+                let actions = '';
+                if (currentUserType === USER_TYPES.PREPARATEUR && order.status === ORDER_STATUS.EN_ATTENTE) {
+                    actions = `<button class="btn-validate" onclick="prepareOrder('${order.id}')">✅ Préparer</button>`;
+                } else if (currentUserType === USER_TYPES.CHAUFFEUR && order.driver === currentUser) {
+                    if (order.status === ORDER_STATUS.PREPARE) {
+                        actions = `<button class="btn-validate" onclick="departOrder('${order.id}')">🚚 Partir</button>`;
+                    } else if (order.status === ORDER_STATUS.EN_COURS) {
+                        actions = `<button class="btn-validate" onclick="openSignatureModal('${order.id}')">📝 Livrer</button>`;
+                    }
+                }
+                let sigBtn = (order.signature && (currentUserType === USER_TYPES.ADMIN || currentUserType === USER_TYPES.CHAUFFEUR))
+                    ? `<button class="view-signature-btn" onclick="viewSignature('${order.signature}')">📝 Voir signature</button>` : '';
+                return `
+                    <div class="order-card ${order.status}">
+                        <div class="item-header">
+                            <span class="customer-name">${escapeHtml(order.customer_name)}</span>
+                            <span class="status-badge ${order.status}">${statusLabels[order.status]}</span>
+                        </div>
+                        <div class="order-details">
+                            <div>📍 ${escapeHtml(order.destination)}</div>
+                            <div>⏰ ${timeDisplay}</div>
+                        </div>
+                        <div class="order-meta">
+                            <span>📅 Créé par ${escapeHtml(order.created_by)} le ${formatDateTime(order.created_at)}</span>
+                            ${order.prepared_at ? `<span>📦 Préparé par ${escapeHtml(order.prepared_by)} le ${formatDateTime(order.prepared_at)}</span>` : ''}
+                            ${order.driver_departure_at ? `<span>🚚 Départ le ${formatDateTime(order.driver_departure_at)}</span>` : ''}
+                            ${order.delivered_at ? `<span>✅ Livré le ${formatDateTime(order.delivered_at)}</span>` : ''}
+                        </div>
+                        <div class="order-actions">
+                            ${actions}
+                            ${sigBtn}
+                        </div>
+                    </div>
+                `;
+            }
+
+            addOrderBtn.addEventListener('click', async () => {
+                const name = customerName.value.trim();
+                const addr = customerAddr.value.trim();
+                const driver = driverSelect.value;
+                if (!name || !addr || !driver) return alert('Veuillez remplir tous les champs');
+
+                // Géocodage pour obtenir lat/lon
+                let lat = null, lon = null;
+                try {
+                    const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addr)}&countrycodes=fr&limit=1`, {
+                        headers: { 'User-Agent': 'Livreur-App/1.0' }
+                    });
+                    const geo = await response.json();
+                    if (geo && geo.length > 0) {
+                        lat = parseFloat(geo[0].lat);
+                        lon = parseFloat(geo[0].lon);
+                    }
+                } catch (e) { console.warn('Géocodage échoué', e); }
+
+                const timeReq = getTimeValue();
+                const { error } = await supabase.from('orders').insert([{
+                    customer_name: name,
+                    destination: addr,
+                    driver: driver,
+                    date: currentDate,
+                    time_req: timeReq,
+                    created_by: currentUser,
+                    created_at: new Date().toISOString(),
+                    status: ORDER_STATUS.EN_ATTENTE,
+                    lat: lat,
+                    lon: lon
+                }]);
+                if (!error) {
+                    customerName.value = ''; customerAddr.value = '';
+                    await loadOrders();
+                }
+            });
+
+            // ==================== Gestion des tâches ====================
+            async function loadTaskAssignees() {
+                const { data } = await supabase.from('users').select('username').in('user_type', [USER_TYPES.PREPARATEUR, USER_TYPES.CHAUFFEUR]);
+                if (data) {
+                    taskAssignee.innerHTML = '<option value="">Choisir un responsable</option>';
+                    data.forEach(u => {
+                        const opt = document.createElement('option');
+                        opt.value = u.username;
+                        opt.textContent = u.username;
+                        taskAssignee.appendChild(opt);
+                    });
+                }
+            }
+
+            async function loadTasks() {
+                let query = supabase.from('tasks').select('*').order('created_at', { ascending: false });
+                if (currentUserType !== USER_TYPES.ADMIN) query = query.eq('assigned_to', currentUser);
+                const { data } = await query;
+                let html = '';
+                if (data?.length) {
+                    data.forEach(t => {
+                        const completed = t.completed ? 'completed' : '';
+                        const canComplete = !t.completed && t.assigned_to === currentUser;
+                        html += `
+                            <div class="task-card ${completed}">
+                                <div class="item-header">
+                                    <span class="customer-name">${escapeHtml(t.description)}</span>
+                                    <span class="status-badge ${t.completed ? 'done' : 'todo'}">${t.completed ? '✅ Fait' : '⏳ En cours'}</span>
+                                </div>
+                                <div class="order-meta">
+                                    👤 Assigné à: ${escapeHtml(t.assigned_to)}<br>
+                                    📅 Créé par ${escapeHtml(t.created_by)} le ${formatDateTime(t.created_at)}<br>
+                                    ${t.completed_at ? `✅ Fait le ${formatDateTime(t.completed_at)} par ${escapeHtml(t.completed_by)}` : ''}
+                                </div>
+                                ${canComplete ? `<div class="order-actions"><button class="btn-validate" onclick="completeTask('${t.id}')">✅ Marquer comme fait</button></div>` : ''}
+                            </div>
+                        `;
+                    });
+                } else html = '<p>Aucune tâche</p>';
+                tasksList.innerHTML = html;
+            }
+
+            addTaskBtn.addEventListener('click', async () => {
+                const desc = taskDescription.value.trim();
+                const assignee = taskAssignee.value;
+                if (!desc || !assignee) return alert('Veuillez remplir tous les champs');
+                const { error } = await supabase.from('tasks').insert([{
+                    description: desc,
+                    assigned_to: assignee,
+                    created_by: currentUser,
+                    created_at: new Date().toISOString(),
+                    completed: false
+                }]);
+                if (!error) {
+                    taskDescription.value = ''; taskAssignee.value = '';
+                    await loadTasks();
+                }
+            });
+
+            // ==================== Gestion des transports ====================
+            async function loadTransports() {
+                const { data } = await supabase.from('transports').select('*').order('created_at', { ascending: false });
+                let html = '';
+                if (data?.length) {
+                    data.forEach(t => {
+                        const isDeparted = t.departed;
+                        const canEdit = !isDeparted && (currentUserType === USER_TYPES.ADMIN || currentUserType === USER_TYPES.PREPARATEUR);
+                        let palette = '';
+                        if (t.palette_rendu !== null) {
+                            palette = t.palette_rendu
+                                ? '<div class="palette-info">✅ Palettes rendues</div>'
+                                : `<div class="palette-info">📦 Palettes non rendues: ${t.palette_count}</div>`;
+                        }
+                        html += `
+                            <div class="transport-card ${isDeparted ? 'departed' : ''}">
+                                <div class="item-header">
+                                    <span class="customer-name">${escapeHtml(t.company)} - ${escapeHtml(t.customer)}</span>
+                                    <span class="status-badge ${isDeparted ? 'done' : 'todo'}">${isDeparted ? '✅ Parti' : '⏳ En attente'}</span>
+                                </div>
+                                <div class="order-meta">
+                                    📋 Réf: ${escapeHtml(t.reference || '-')}<br>
+                                    📅 Créé par ${escapeHtml(t.created_by)} le ${formatDateTime(t.created_at)}<br>
+                                    ${t.departed_at ? `🚚 Départ le ${formatDateTime(t.departed_at)} par ${escapeHtml(t.departed_by)}` : ''}
+                                </div>
+                                ${palette}
+                                <div class="order-actions">
+                                    ${!isDeparted ? `<button class="btn-validate" onclick="departTransport('${t.id}')">🚚 Partir</button>` : ''}
+                                    ${canEdit ? `<button class="btn-edit" onclick="editTransport('${t.id}')">✏️ Modifier</button>` : ''}
+                                    ${canEdit ? `<button class="btn-delete" onclick="deleteTransport('${t.id}')">🗑️ Supprimer</button>` : ''}
+                                </div>
+                            </div>
+                        `;
+                    });
+                } else html = '<p>Aucun transport</p>';
+                transportsList.innerHTML = html;
+            }
+
+            addTransportBtn.addEventListener('click', async () => {
+                const company = transportCompany.value;
+                const customer = transportCustomer.value.trim();
+                const ref = transportReference.value.trim();
+                if (!customer) return alert('Veuillez entrer le nom du client');
+                const { error } = await supabase.from('transports').insert([{
+                    company, customer, reference: ref,
+                    created_by: currentUser,
+                    created_at: new Date().toISOString(),
+                    departed: false
+                }]);
+                if (!error) {
+                    transportCustomer.value = ''; transportReference.value = '';
+                    await loadTransports();
+                }
+            });
+
+            cancelEditTransportBtn.addEventListener('click', () => {
+                editTransportModal.style.display = 'none';
+                currentTransportId = null;
+            });
+
+            saveEditTransportBtn.addEventListener('click', async () => {
+                if (!currentTransportId) return;
+                await supabase.from('transports').update({
+                    company: editTransportCompany.value,
+                    customer: editTransportCustomer.value.trim(),
+                    reference: editTransportReference.value.trim()
+                }).eq('id', currentTransportId);
+                editTransportModal.style.display = 'none';
+                currentTransportId = null;
+                await loadTransports();
+            });
+
+            // ==================== Signature ====================
+            function initSignaturePad() {
+                signaturePad = new SignaturePad(signatureCanvas, {
+                    backgroundColor: 'rgb(255, 255, 255)',
+                    penColor: 'rgb(0, 0, 0)'
+                });
+                function resizeCanvas() {
+                    const ratio = Math.max(window.devicePixelRatio || 1, 1);
+                    signatureCanvas.width = signatureCanvas.offsetWidth * ratio;
+                    signatureCanvas.height = signatureCanvas.offsetHeight * ratio;
+                    signatureCanvas.getContext('2d').scale(ratio, ratio);
+                    signaturePad.clear();
+                }
+                resizeCanvas();
+                window.addEventListener('resize', resizeCanvas);
+            }
+
+            clearSignatureBtn.addEventListener('click', () => signaturePad?.clear());
+            cancelSignatureBtn.addEventListener('click', () => {
+                signatureModal.style.display = 'none';
+                currentOrderId = null;
+                signaturePad?.clear();
+            });
+
+            saveSignatureBtn.addEventListener('click', async () => {
+                if (!currentOrderId || !signaturePad || signaturePad.isEmpty()) {
+                    alert('Veuillez signer');
+                    return;
+                }
+                const signatureData = signaturePad.toDataURL();
+                const { error } = await supabase
+                    .from('orders')
+                    .update({ status: ORDER_STATUS.LIVRE, delivered_at: new Date().toISOString(), signature: signatureData })
+                    .eq('id', currentOrderId);
+                if (!error) {
+                    signatureModal.style.display = 'none';
+                    currentOrderId = null;
+                    signaturePad.clear();
+                    await loadOrders();
+                }
+            });
+
+            // ==================== Carte ====================
+            function initMap() {
+                if (!map) {
+                    map = L.map('map').setView([START_POINT.lat, START_POINT.lon], 11);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '© OpenStreetMap contributors'
+                    }).addTo(map);
+                    L.marker([START_POINT.lat, START_POINT.lon], {
+                        icon: L.divIcon({ className: 'start-marker', html: '🚩', iconSize: [30, 30] })
+                    }).addTo(map).bindPopup('Départ');
+                }
+            }
+
+            async function updateMap(orders) {
+                if (!map || currentUserType === USER_TYPES.PREPARATEUR) return;
+                mapMarkers.forEach(m => map.removeLayer(m));
+                mapMarkers = [];
+                orders.forEach(order => {
+                    if (order.lat && order.lon) {
+                        const markerColor = order.status === ORDER_STATUS.LIVRE ? 'green' : 'red';
+                        const marker = L.marker([order.lat, order.lon], {
+                            icon: L.divIcon({
+                                className: 'customer-marker',
+                                html: `<div style="background:${markerColor}; width:20px; height:20px; border-radius:50%; border:2px solid white;"></div>`,
+                                iconSize: [20, 20]
+                            })
+                        }).addTo(map);
+                        marker.bindPopup(`
+                            <strong>${escapeHtml(order.customer_name)}</strong><br>
+                            📍 ${escapeHtml(order.destination)}<br>
+                            ⏰ ${formatTimeRequirement(order)}<br>
+                            ${order.status === ORDER_STATUS.LIVRE ? '✅ Livré' : '⏳ En attente'}
+                        `);
+                        mapMarkers.push(marker);
+                    }
+                });
+            }
+
+            // ==================== Optimisation d'itinéraire (avec distance) ====================
+            optimizeBtn.addEventListener('click', async () => {
+                const { data: orders } = await supabase
+                    .from('orders')
+                    .select('*')
+                    .eq('date', currentDate)
+                    .eq('driver', currentUser)
+                    .neq('status', ORDER_STATUS.LIVRE);
+                if (!orders || orders.length === 0) return alert('Aucune livraison à planifier');
+                routeStatus.innerHTML = '🔄 Calcul...';
+
+                const withCoords = orders.filter(o => o.lat && o.lon);
+                const withoutCoords = orders.filter(o => !o.lat || !o.lon);
+
+                // Tri par priorité (heure de début)
+                withCoords.sort((a, b) => (getStartTimeMinutes(a) - getStartTimeMinutes(b)));
+
+                // Plus proche voisin
+                let route = [], remaining = [...withCoords];
+                if (remaining.length) { route.push(remaining[0]); remaining = remaining.slice(1); }
+                while (remaining.length) {
+                    const cur = route[route.length - 1];
+                    let bestIdx = 0, bestDist = Infinity;
+                    for (let i = 0; i < remaining.length; i++) {
+                        if (cur.lat && cur.lon && remaining[i].lat && remaining[i].lon) {
+                            const d = calculateDistance(cur.lat, cur.lon, remaining[i].lat, remaining[i].lon);
+                            if (d < bestDist) { bestDist = d; bestIdx = i; }
+                        }
+                    }
+                    route.push(remaining[bestIdx]);
+                    remaining = remaining.filter((_, i) => i !== bestIdx);
+                }
+                route = [...route, ...withoutCoords];
+
+                let stepsHtml = '', totalDist = 0, prevLat = START_POINT.lat, prevLon = START_POINT.lon;
+                let startTime = new Date();
+                const firstDep = orders.find(o => o.departed)?.departure_time;
+                if (firstDep) startTime = new Date(firstDep); else startTime.setHours(9, 0, 0);
+                let currentTime = new Date(startTime);
+
+                route.forEach((o, idx) => {
+                    let distText = '';
+                    if (prevLat && prevLon && o.lat && o.lon) {
+                        const d = calculateDistance(prevLat, prevLon, o.lat, o.lon);
+                        totalDist += d;
+                        const travel = Math.round(d / 30 * 60);
+                        const delivery = Math.floor(Math.random() * 16) + 30; // 30-45 min
+                        currentTime.setMinutes(currentTime.getMinutes() + travel + delivery);
+                        const arrival = currentTime.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+                        distText = `<br><small>🚗 ${d.toFixed(1)} km, 🕒 Arrivée: ${arrival}</small>`;
+                        prevLat = o.lat; prevLon = o.lon;
+                    }
+                    stepsHtml += `
+                        <li>
+                            <span style="background:#f09b4b; color:white; width:28px; height:28px; display:inline-flex; align-items:center; justify-content:center; border-radius:50%; margin-right:10px;">${idx+1}</span>
+                            <strong>${escapeHtml(o.customer_name)}</strong><br>
+                            📍 ${escapeHtml(o.destination)}${distText}
+                        </li>
+                    `;
+                });
+                routeStepsList.innerHTML = stepsHtml;
+                routeStatus.innerHTML = '✅ Itinéraire généré';
+            });
+
+            // ==================== Fonctions utilitaires ====================
+            function getTimeValue() {
+                const type = timeType.value;
+                if (type === 'fixed') {
+                    const fixed = document.getElementById('fixedTime');
+                    return { type: 'fixed', value: fixed ? fixed.value : '10:00' };
+                } else if (type === 'before') {
+                    const before = document.getElementById('beforeTime');
+                    return { type: 'before', value: before ? before.value : '18:00' };
+                } else if (type === 'range') {
+                    const start = document.getElementById('rangeStart');
+                    const end = document.getElementById('rangeEnd');
+                    return { type: 'range', value: { start: start?.value || '09:00', end: end?.value || '17:00' } };
+                } else {
+                    return { type: 'free', value: null };
+                }
+            }
+
+            function getStartTimeMinutes(order) {
+                if (!order.time_req || order.time_req.type === 'free') return 24 * 60;
+                const start = order.time_req.value?.start || order.time_req.value;
+                if (!start) return 24 * 60;
+                const [h, m] = start.split(':').map(Number);
+                return h * 60 + m;
+            }
+
+            function formatTimeRequirement(order) {
+                if (!order.time_req) return '⏰ Libre';
+                if (order.time_req.type === 'fixed') return `⏰ ${order.time_req.value}`;
+                if (order.time_req.type === 'before') return `⏰ avant ${order.time_req.value}`;
+                if (order.time_req.type === 'range') return `⏰ ${order.time_req.value.start} - ${order.time_req.value.end}`;
+                return '⏰ Libre';
+            }
+
+            function formatDateTime(ts) {
+                if (!ts) return '';
+                const d = new Date(ts);
+                return d.toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+            }
+
+            function escapeHtml(unsafe) {
+                if (!unsafe) return '';
+                return unsafe
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;")
+                    .replace(/'/g, "&#039;");
+            }
+
+            function calculateDistance(lat1, lon1, lat2, lon2) {
+                const R = 6371;
+                const dLat = (lat2 - lat1) * Math.PI / 180;
+                const dLon = (lon2 - lon1) * Math.PI / 180;
+                const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                          Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                          Math.sin(dLon/2) * Math.sin(dLon/2);
+                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+                return R * c;
+            }
+
+            // ==================== Changement de date ====================
+            inputDatePicker.addEventListener('change', (e) => {
+                currentDate = e.target.value;
+                loadOrders();
+            });
+
+            // ==================== Initialisation ====================
+            setDefaultDate();
+            if (timeType) renderTimeInput();
+        })();
+    </script>
+</body>
+</html>
