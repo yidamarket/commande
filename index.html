@@ -99,6 +99,18 @@
             margin-bottom: 10px;
             font-size: 1rem;
         }
+        .remember-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 20px;
+            color: #1d4a72;
+        }
+        .remember-checkbox input {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
         .user-info-bar {
             background: #d4e3fd;
             border-radius: 40px;
@@ -282,6 +294,7 @@
             border-radius: 24px;
             padding: 16px;
             margin-bottom: 20px;
+            display: block;
         }
         @media (min-width: 768px) {
             .map-container {
@@ -797,6 +810,38 @@
             display: inline-block;
             margin-top: 5px;
         }
+        
+        /* Driver selector for admin */
+        .driver-selector-container {
+            background: white;
+            border-radius: 30px;
+            padding: 16px;
+            margin-bottom: 20px;
+            border: 2px solid #2f6d9e;
+        }
+        .driver-selector-title {
+            color: #1d4a72;
+            font-weight: 600;
+            margin-bottom: 10px;
+            font-size: 1rem;
+        }
+        .driver-selector {
+            width: 100%;
+            padding: 14px 20px;
+            border: 2px solid #b9cfe6;
+            border-radius: 40px;
+            font-size: 1rem;
+            background: white;
+            cursor: pointer;
+            outline: none;
+            transition: border 0.2s;
+        }
+        .driver-selector:focus {
+            border-color: #2f6d9e;
+        }
+        .driver-selector option {
+            padding: 10px;
+        }
     </style>
 </head>
 <body>
@@ -807,6 +852,9 @@
             <div id="loginForm">
                 <input type="text" class="login-input" id="loginUsername" placeholder="Nom d'utilisateur">
                 <input type="password" class="login-input" id="loginPassword" placeholder="Mot de passe">
+                <label class="remember-checkbox">
+                    <input type="checkbox" id="rememberMe" checked> Se souvenir de moi
+                </label>
                 <button class="login-btn" id="loginBtn">Se connecter</button>
             </div>
         </div>
@@ -993,13 +1041,24 @@
                     <input type="date" id="inputDate" class="date-picker-input">
                 </div>
             </div>
+            
+            <!-- Sélecteur de chauffeur pour l'admin -->
+            <div class="driver-selector-container" id="adminDriverSelector" style="display: none;">
+                <div class="driver-selector-title">👤 Sélectionner un chauffeur</div>
+                <select id="adminDriverSelect" class="driver-selector">
+                    <option value="">Tous les chauffeurs</option>
+                </select>
+            </div>
+            
             <div class="main-layout">
                 <div class="left-panel">
-                    <div class="map-container">
+                    <!-- Carte : visible pour admin et chauffeur -->
+                    <div class="map-container" id="mapContainer">
                         <div class="section-title">🗺️ Carte des livraisons</div>
                         <div id="map"></div>
                         <button class="geocode-btn" id="geocodeAllBtn" style="margin-top:10px;">📍 Géocoder toutes les adresses</button>
                     </div>
+                    
                     <div class="section-card" id="addOrderSection" style="display: none;">
                         <div class="section-title">📝 Nouvelle commande</div>
                         <div class="input-row">
@@ -1026,24 +1085,27 @@
                         </div>
                         <button class="btn-add" id="addOrderBtn" style="width:100%;">➕ Ajouter la commande</button>
                     </div>
-                    <h3>📋 Commandes par chauffeur</h3>
+                    <h3>📋 Commandes</h3>
                     <div id="loadingMessage" class="loading" style="display: none;">Chargement...</div>
                     <div id="ordersByDriver"></div>
                 </div>
                 <div class="right-panel">
-                    <div class="route-header">
-                        <h3>🗺️ Itinéraire</h3>
-                        <span class="route-status" id="routeStatus">🔄 En attente</span>
-                    </div>
-                    <div id="routeOutput">
-                        <div id="startPointInfo" class="start-point">
-                            <strong>🚩 Départ:</strong> 98 Rue Anselme Rondenay, 94400 Vitry-sur-Seine
+                    <!-- Itinéraire : visible pour admin et chauffeur -->
+                    <div id="routePanel">
+                        <div class="route-header">
+                            <h3>🗺️ Itinéraire</h3>
+                            <span class="route-status" id="routeStatus">🔄 En attente</span>
                         </div>
-                        <ul class="route-steps" id="routeStepsList">
-                            <li style="text-align:center; color:#8899bb;">Cliquez sur "Optimiser" pour générer l'itinéraire</li>
-                        </ul>
+                        <div id="routeOutput">
+                            <div id="startPointInfo" class="start-point">
+                                <strong>🚩 Départ:</strong> 98 Rue Anselme Rondenay, 94400 Vitry-sur-Seine
+                            </div>
+                            <ul class="route-steps" id="routeStepsList">
+                                <li style="text-align:center; color:#8899bb;">Cliquez sur "Optimiser" pour générer l'itinéraire</li>
+                            </ul>
+                        </div>
+                        <button class="btn-add" id="optimizeRouteBtn" style="background:#ff9f4b; color:#aa5f1e; margin-top:10px; width:100%;">🗺️ Optimiser l'itinéraire</button>
                     </div>
-                    <button class="btn-add" id="optimizeRouteBtn" style="background:#ff9f4b; color:#aa5f1e; margin-top:10px; width:100%;">🗺️ Optimiser l'itinéraire</button>
                 </div>
             </div>
         </div>
@@ -1125,6 +1187,7 @@
             let currentUser = null, currentUserType = null, currentDate = new Date().toISOString().split('T')[0];
             let map = null, mapMarkers = [], signaturePad = null, currentOrderId = null, currentTransportId = null, currentEditOrderId = null, currentEditTaskId = null, currentEditUserId = null;
             let confirmResolve = null;
+            let selectedDriver = null; // Pour l'admin
 
             // Éléments DOM
             const loginOverlay = document.getElementById('loginOverlay');
@@ -1133,6 +1196,7 @@
             const loginPassword = document.getElementById('loginPassword');
             const loginBtn = document.getElementById('loginBtn');
             const logoutBtn = document.getElementById('logoutBtn');
+            const rememberMe = document.getElementById('rememberMe');
             const currentUserDisplay = document.getElementById('currentUserDisplay');
             const userTypeDisplay = document.getElementById('userTypeDisplay');
             const adminSection = document.getElementById('adminSection');
@@ -1156,6 +1220,10 @@
             const createUserBtn = document.getElementById('createUserBtn');
             const ordersByDriver = document.getElementById('ordersByDriver');
             const geocodeAllBtn = document.getElementById('geocodeAllBtn');
+            const mapContainer = document.getElementById('mapContainer');
+            const routePanel = document.getElementById('routePanel');
+            const adminDriverSelector = document.getElementById('adminDriverSelector');
+            const adminDriverSelect = document.getElementById('adminDriverSelect');
 
             // Tâches
             const addTaskSection = document.getElementById('addTaskSection');
@@ -1220,6 +1288,50 @@
             const confirmMessage = document.getElementById('confirmMessage');
             const confirmYesBtn = document.getElementById('confirmYesBtn');
             const confirmNoBtn = document.getElementById('confirmNoBtn');
+
+            // ==================== Gestion de la session ====================
+            function saveSession(username, userType, remember) {
+                if (remember) {
+                    localStorage.setItem('rememberedUser', username);
+                    localStorage.setItem('rememberedUserType', userType);
+                    // Nettoyer sessionStorage
+                    sessionStorage.removeItem('currentUser');
+                    sessionStorage.removeItem('currentUserType');
+                } else {
+                    sessionStorage.setItem('currentUser', username);
+                    sessionStorage.setItem('currentUserType', userType);
+                    // Nettoyer localStorage
+                    localStorage.removeItem('rememberedUser');
+                    localStorage.removeItem('rememberedUserType');
+                }
+            }
+
+            function loadSession() {
+                // Vérifier d'abord localStorage (remember me)
+                const rememberedUser = localStorage.getItem('rememberedUser');
+                const rememberedUserType = localStorage.getItem('rememberedUserType');
+                
+                if (rememberedUser && rememberedUserType) {
+                    return { username: rememberedUser, userType: rememberedUserType };
+                }
+                
+                // Sinon vérifier sessionStorage
+                const sessionUser = sessionStorage.getItem('currentUser');
+                const sessionUserType = sessionStorage.getItem('currentUserType');
+                
+                if (sessionUser && sessionUserType) {
+                    return { username: sessionUser, userType: sessionUserType };
+                }
+                
+                return null;
+            }
+
+            function clearSession() {
+                localStorage.removeItem('rememberedUser');
+                localStorage.removeItem('rememberedUserType');
+                sessionStorage.removeItem('currentUser');
+                sessionStorage.removeItem('currentUserType');
+            }
 
             // ==================== Custom Confirm Function ====================
             function showConfirm(title, message) {
@@ -1441,6 +1553,7 @@
                     await loadUsers();
                     await loadDrivers();
                     await loadTaskAssignees();
+                    await loadAdminDrivers();
                 }
             };
 
@@ -1519,8 +1632,26 @@
             }
             if (timeType) timeType.addEventListener('change', renderTimeInput);
 
+            // ==================== Charger les chauffeurs pour le sélecteur admin ====================
+            async function loadAdminDrivers() {
+                const { data, error } = await supabase
+                    .from('users')
+                    .select('username')
+                    .eq('user_type', USER_TYPES.CHAUFFEUR);
+                    
+                if (data) {
+                    adminDriverSelect.innerHTML = '<option value="">Tous les chauffeurs</option>';
+                    data.forEach(driver => {
+                        const option = document.createElement('option');
+                        option.value = driver.username;
+                        option.textContent = driver.username;
+                        adminDriverSelect.appendChild(option);
+                    });
+                }
+            }
+
             // ==================== Connexion ====================
-            async function login(username, password) {
+            async function login(username, password, remember = false) {
                 try {
                     const { data, error } = await supabase
                         .from('users')
@@ -1541,17 +1672,43 @@
                         };
                         userTypeDisplay.innerText = `(${typeLabels[currentUserType]})`;
                         
+                        // Sauvegarder la session
+                        saveSession(currentUser, currentUserType, remember);
+                        
                         loginOverlay.style.display = 'none';
                         appContainer.style.display = 'block';
                         
-                        initMap();
+                        // Initialiser la carte après que le conteneur soit visible
+                        setTimeout(() => {
+                            initMap();
+                        }, 100);
                         
                         const isAdmin = currentUserType === USER_TYPES.ADMIN;
+                        const isPreparateur = currentUserType === USER_TYPES.PREPARATEUR;
+                        const isChauffeur = currentUserType === USER_TYPES.CHAUFFEUR;
                         const canCreateOrders = isAdmin;
-                        const canCreateTransports = isAdmin || currentUserType === USER_TYPES.PREPARATEUR;
+                        const canCreateTransports = isAdmin || isPreparateur;
                         
                         adminSection.style.display = isAdmin ? 'block' : 'none';
-                        if (isAdmin) await loadUsers();
+                        if (isAdmin) {
+                            await loadUsers();
+                            await loadAdminDrivers();
+                        }
+                        
+                        // Afficher/cacher les éléments selon le type d'utilisateur
+                        if (isPreparateur) {
+                            mapContainer.style.display = 'none';
+                            routePanel.style.display = 'none';
+                            adminDriverSelector.style.display = 'none';
+                        } else {
+                            mapContainer.style.display = 'block';
+                            routePanel.style.display = 'block';
+                            if (isAdmin) {
+                                adminDriverSelector.style.display = 'block';
+                            } else {
+                                adminDriverSelector.style.display = 'none';
+                            }
+                        }
                         
                         addOrderSection.style.display = canCreateOrders ? 'block' : 'none';
                         await loadDrivers();
@@ -1563,7 +1720,7 @@
                         
                         // Transports : visible pour admin et préparateur, caché pour chauffeur
                         addTransportSection.style.display = canCreateTransports ? 'block' : 'none';
-                        if (currentUserType !== USER_TYPES.CHAUFFEUR) {
+                        if (!isChauffeur) {
                             await loadTransports();
                         } else {
                             // Pour chauffeur, on cache complètement l'onglet transports
@@ -1583,10 +1740,81 @@
                 }
             }
 
+            // Vérifier session au chargement
+            const savedSession = loadSession();
+            if (savedSession) {
+                // Reconnecter automatiquement sans vérifier le mot de passe
+                currentUser = savedSession.username;
+                currentUserType = savedSession.userType;
+                
+                // Afficher directement l'interface
+                currentUserDisplay.innerText = `👤 ${currentUser}`;
+                const typeLabels = {
+                    'admin': 'Administrateur',
+                    'preparateur': 'Préparateur',
+                    'chauffeur': 'Chauffeur'
+                };
+                userTypeDisplay.innerText = `(${typeLabels[currentUserType]})`;
+                
+                loginOverlay.style.display = 'none';
+                appContainer.style.display = 'block';
+                
+                // Initialiser la carte après que le conteneur soit visible
+                setTimeout(() => {
+                    initMap();
+                }, 100);
+                
+                const isAdmin = currentUserType === USER_TYPES.ADMIN;
+                const isPreparateur = currentUserType === USER_TYPES.PREPARATEUR;
+                const isChauffeur = currentUserType === USER_TYPES.CHAUFFEUR;
+                const canCreateOrders = isAdmin;
+                const canCreateTransports = isAdmin || isPreparateur;
+                
+                adminSection.style.display = isAdmin ? 'block' : 'none';
+                if (isAdmin) {
+                    loadUsers();
+                    loadAdminDrivers();
+                }
+                
+                // Afficher/cacher les éléments selon le type d'utilisateur
+                if (isPreparateur) {
+                    mapContainer.style.display = 'none';
+                    routePanel.style.display = 'none';
+                    adminDriverSelector.style.display = 'none';
+                } else {
+                    mapContainer.style.display = 'block';
+                    routePanel.style.display = 'block';
+                    if (isAdmin) {
+                        adminDriverSelector.style.display = 'block';
+                    } else {
+                        adminDriverSelector.style.display = 'none';
+                    }
+                }
+                
+                addOrderSection.style.display = canCreateOrders ? 'block' : 'none';
+                loadDrivers();
+                loadOrders();
+                
+                addTaskSection.style.display = isAdmin ? 'block' : 'none';
+                loadTaskAssignees();
+                loadTasks();
+                
+                addTransportSection.style.display = canCreateTransports ? 'block' : 'none';
+                if (!isChauffeur) {
+                    loadTransports();
+                } else {
+                    const transportTab = document.querySelector('[data-tab="transports"]');
+                    if (transportTab) transportTab.style.display = 'none';
+                }
+                
+                setTimeout(geocodeAllOrders, 1000);
+            }
+
             loginBtn.addEventListener('click', async () => {
                 const username = loginUsername.value.trim();
                 const password = loginPassword.value.trim();
-                const success = await login(username, password);
+                const remember = rememberMe.checked;
+                const success = await login(username, password, remember);
                 if (!success) alert('Nom d\'utilisateur ou mot de passe incorrect');
             });
 
@@ -1595,12 +1823,14 @@
             });
 
             logoutBtn.addEventListener('click', () => {
+                clearSession();
                 currentUser = null;
                 currentUserType = null;
                 appContainer.style.display = 'none';
                 loginOverlay.style.display = 'flex';
                 loginUsername.value = '';
                 loginPassword.value = '';
+                rememberMe.checked = true;
                 // Réafficher l'onglet transports au cas où
                 const transportTab = document.querySelector('[data-tab="transports"]');
                 if (transportTab) transportTab.style.display = '';
@@ -1659,6 +1889,7 @@
                     await loadUsers();
                     await loadDrivers();
                     await loadTaskAssignees();
+                    await loadAdminDrivers();
                 }
             });
 
@@ -1700,6 +1931,7 @@
                     await loadUsers();
                     await loadDrivers();
                     await loadTaskAssignees();
+                    await loadAdminDrivers();
                 }
             });
 
@@ -1739,28 +1971,44 @@
             // ==================== Gestion des commandes ====================
             async function loadOrders() {
                 loadingMessage.style.display = 'block';
+                
                 let query = supabase
                     .from('orders')
                     .select('*')
                     .eq('date', currentDate)
                     .order('created_at', { ascending: false });
+                
+                // Filtrage selon le type d'utilisateur
                 if (currentUserType === USER_TYPES.CHAUFFEUR) {
                     query = query.eq('driver', currentUser);
+                } else if (currentUserType === USER_TYPES.ADMIN && selectedDriver) {
+                    query = query.eq('driver', selectedDriver);
                 }
+                // Préparateur voit toutes les commandes groupées par chauffeur
+                
                 const { data, error } = await query;
+                
                 if (data) {
-                    renderOrdersByDriver(data);
+                    if (currentUserType === USER_TYPES.PREPARATEUR || (currentUserType === USER_TYPES.ADMIN && !selectedDriver)) {
+                        // Préparateur ou admin sans filtre : voir groupé par chauffeur
+                        renderOrdersGroupedByDriver(data);
+                    } else {
+                        // Vue simple pour chauffeur ou admin filtré
+                        renderOrdersSimple(data);
+                    }
                     updateMap(data);
                 }
+                
                 loadingMessage.style.display = 'none';
             }
 
-            function renderOrdersByDriver(orders) {
+            function renderOrdersGroupedByDriver(orders) {
                 const byDriver = {};
                 orders.forEach(order => {
                     if (!byDriver[order.driver]) byDriver[order.driver] = [];
                     byDriver[order.driver].push(order);
                 });
+                
                 let html = '';
                 for (const [driver, driverOrders] of Object.entries(byDriver)) {
                     html += `<div class="driver-group"><h4>👤 Chauffeur: ${escapeHtml(driver)}</h4>`;
@@ -1769,6 +2017,14 @@
                     });
                     html += '</div>';
                 }
+                ordersByDriver.innerHTML = html || '<p>Aucune commande</p>';
+            }
+
+            function renderOrdersSimple(orders) {
+                let html = '';
+                orders.forEach(order => {
+                    html += renderOrderItem(order);
+                });
                 ordersByDriver.innerHTML = html || '<p>Aucune commande</p>';
             }
 
@@ -1781,6 +2037,7 @@
                     'livre': 'Livré'
                 };
                 let actions = '';
+                
                 if (currentUserType === USER_TYPES.PREPARATEUR && order.status === ORDER_STATUS.EN_ATTENTE) {
                     actions = `<button class="btn-validate" onclick="prepareOrder('${order.id}')">✅ Préparer</button>`;
                 } else if (currentUserType === USER_TYPES.CHAUFFEUR && order.driver === currentUser) {
@@ -1803,6 +2060,7 @@
                 if (order.signature && (currentUserType === USER_TYPES.ADMIN || currentUserType === USER_TYPES.CHAUFFEUR)) {
                     signatureButton = `<button class="view-signature-btn" onclick="viewSignature('${order.signature}')">📝 Voir signature</button>`;
                 }
+                
                 return `
                     <div class="order-card ${order.status}">
                         <div class="item-header">
@@ -2253,93 +2511,115 @@
             }
 
             // ==================== Optimisation d'itinéraire ====================
-            optimizeBtn.addEventListener('click', async () => {
-                const { data: orders, error } = await supabase
-                    .from('orders')
-                    .select('*')
-                    .eq('date', currentDate)
-                    .eq('driver', currentUser)
-                    .neq('status', ORDER_STATUS.LIVRE);
-                    
-                if (!orders || orders.length === 0) {
-                    alert('Aucune livraison à planifier');
-                    return;
+         // ==================== Optimisation d'itinéraire ====================
+optimizeBtn.addEventListener('click', async () => {
+    let query = supabase
+        .from('orders')
+        .select('*')
+        .eq('date', currentDate)
+        .neq('status', ORDER_STATUS.LIVRE);
+    
+    // Filtrer selon le type d'utilisateur
+    if (currentUserType === USER_TYPES.CHAUFFEUR) {
+        query = query.eq('driver', currentUser);
+    } else if (currentUserType === USER_TYPES.ADMIN && selectedDriver) {
+        query = query.eq('driver', selectedDriver);
+    } else if (currentUserType === USER_TYPES.ADMIN && !selectedDriver) {
+        alert('Veuillez sélectionner un chauffeur pour voir son itinéraire');
+        return;
+    } else if (currentUserType === USER_TYPES.PREPARATEUR) {
+        alert('Les préparateurs n\'ont pas accès à l\'optimisation d\'itinéraire');
+        return;
+    }
+    
+    const { data: orders, error } = await query;
+        
+    if (!orders || orders.length === 0) {
+        alert('Aucune livraison à planifier');
+        return;
+    }
+    
+    routeStatus.innerHTML = '🔄 Calcul...';
+    
+    const withCoords = orders.filter(o => o.lat && o.lon);
+    const withoutCoords = orders.filter(o => !o.lat || !o.lon);
+    
+    // Tri par priorité (heure de début)
+    withCoords.sort((a, b) => (getStartTimeMinutes(a) - getStartTimeMinutes(b)));
+    
+    // Algorithme du plus proche voisin
+    let finalRoute = [];
+    let remaining = [...withCoords];
+    
+    if (remaining.length > 0) {
+        finalRoute.push(remaining[0]);
+        remaining = remaining.slice(1);
+    }
+    
+    while (remaining.length > 0) {
+        const current = finalRoute[finalRoute.length - 1];
+        let bestIdx = 0;
+        let bestDist = Infinity;
+        
+        for (let i = 0; i < remaining.length; i++) {
+            if (current.lat && current.lon && remaining[i].lat && remaining[i].lon) {
+                const dist = calculateDistance(
+                    current.lat, current.lon,
+                    remaining[i].lat, remaining[i].lon
+                );
+                if (dist < bestDist) {
+                    bestDist = dist;
+                    bestIdx = i;
                 }
-                
-                routeStatus.innerHTML = '🔄 Calcul...';
-                
-                const withCoords = orders.filter(o => o.lat && o.lon);
-                const withoutCoords = orders.filter(o => !o.lat || !o.lon);
-                
-                // Tri par priorité (heure de début)
-                withCoords.sort((a, b) => (getStartTimeMinutes(a) - getStartTimeMinutes(b)));
-                
-                // Algorithme du plus proche voisin
-                let finalRoute = [];
-                let remaining = [...withCoords];
-                
-                if (remaining.length > 0) {
-                    finalRoute.push(remaining[0]);
-                    remaining = remaining.slice(1);
-                }
-                
-                while (remaining.length > 0) {
-                    const current = finalRoute[finalRoute.length - 1];
-                    let bestIdx = 0;
-                    let bestDist = Infinity;
-                    
-                    for (let i = 0; i < remaining.length; i++) {
-                        if (current.lat && current.lon && remaining[i].lat && remaining[i].lon) {
-                            const dist = calculateDistance(
-                                current.lat, current.lon,
-                                remaining[i].lat, remaining[i].lon
-                            );
-                            if (dist < bestDist) {
-                                bestDist = dist;
-                                bestIdx = i;
-                            }
-                        }
-                    }
-                    finalRoute.push(remaining[bestIdx]);
-                    remaining = remaining.filter((_, i) => i !== bestIdx);
-                }
-                
-                finalRoute = [...finalRoute, ...withoutCoords];
-                
-                let stepsHtml = '';
-                let prevLat = START_POINT.lat;
-                let prevLon = START_POINT.lon;
-                let startTime = new Date();
-                startTime.setHours(9, 0, 0);
-                let currentTime = new Date(startTime);
-                
-                finalRoute.forEach((order, idx) => {
-                    let distanceText = '';
-                    if (prevLat && prevLon && order.lat && order.lon) {
-                        const dist = calculateDistance(prevLat, prevLon, order.lat, order.lon);
-                        const travelTime = Math.round(dist / 30 * 60);
-                        const deliveryTime = 30; // 30 minutes par défaut
-                        
-                        currentTime.setMinutes(currentTime.getMinutes() + travelTime + deliveryTime);
-                        const arrivalTime = currentTime.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-                        
-                        distanceText = `<br><small>🚗 ${dist.toFixed(1)} km, 🕒 Arrivée: ${arrivalTime}</small>`;
-                        prevLat = order.lat;
-                        prevLon = order.lon;
-                    }
-                    
-                    stepsHtml += `
-                        <li>
-                            <span style="background:#f09b4b; color:white; width:28px; height:28px; display:inline-flex; align-items:center; justify-content:center; border-radius:50%; margin-right:10px;">${idx+1}</span>
-                            <strong>${escapeHtml(order.customer_name)}</strong><br>
-                            📍 ${escapeHtml(order.destination)}${distanceText}
-                        </li>
-                    `;
+            }
+        }
+        finalRoute.push(remaining[bestIdx]);
+        remaining = remaining.filter((_, i) => i !== bestIdx);
+    }
+    
+    finalRoute = [...finalRoute, ...withoutCoords];
+    
+    let stepsHtml = '';
+    let prevLat = START_POINT.lat;
+    let prevLon = START_POINT.lon;
+    let startTime = new Date();
+    startTime.setHours(9, 0, 0);
+    let currentTime = new Date(startTime);
+    
+    finalRoute.forEach((order, idx) => {
+        let distanceText = '';
+        if (prevLat && prevLon && order.lat && order.lon) {
+            const dist = calculateDistance(prevLat, prevLon, order.lat, order.lon);
+            const travelTime = Math.round(dist / 30 * 60);
+            const deliveryTime = 30; // 30 minutes par défaut
+            
+            currentTime.setMinutes(currentTime.getMinutes() + travelTime + deliveryTime);
+            const arrivalTime = currentTime.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+            
+            distanceText = `<br><small>🚗 ${dist.toFixed(1)} km, 🕒 Arrivée: ${arrivalTime}</small>`;
+            prevLat = order.lat;
+            prevLon = order.lon;
+        }
+        
+        stepsHtml += `
+            <li>
+                <span style="background:#f09b4b; color:white; width:28px; height:28px; display:inline-flex; align-items:center; justify-content:center; border-radius:50%; margin-right:10px;">${idx+1}</span>
+                <strong>${escapeHtml(order.customer_name)}</strong><br>
+                📍 ${escapeHtml(order.destination)}${distanceText}
+            </li>
+        `;
+    });
+    
+    routeStepsList.innerHTML = stepsHtml;
+    routeStatus.innerHTML = '✅ Itinéraire généré';
+});
+            // ==================== Sélecteur de chauffeur pour admin ====================
+            if (adminDriverSelect) {
+                adminDriverSelect.addEventListener('change', (e) => {
+                    selectedDriver = e.target.value || null;
+                    loadOrders();
                 });
-                
-                routeStepsList.innerHTML = stepsHtml;
-                routeStatus.innerHTML = '✅ Itinéraire généré';
-            });
+            }
 
             // ==================== Fonctions utilitaires ====================
             function getTimeValue() {
