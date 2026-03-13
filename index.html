@@ -8,9 +8,9 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚚</text></svg>">
     <!-- Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- Leaflet pour la carte -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- MapLibre -->
+    <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" />
+    <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
     <!-- Signature Pad -->
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
     <style>
@@ -295,6 +295,7 @@
             padding: 16px;
             margin-bottom: 20px;
             display: block;
+            position: relative;
         }
         @media (min-width: 768px) {
             .map-container {
@@ -303,14 +304,9 @@
             }
         }
         #map {
-            height: 300px;
+            height: 400px;
             border-radius: 20px;
             z-index: 1;
-        }
-        @media (min-width: 768px) {
-            #map {
-                height: 400px;
-            }
         }
         .section-card {
             background: #f5faff;
@@ -621,6 +617,22 @@
             margin: 10px 0;
             font-size: 0.9rem;
         }
+        .palette-detail {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 0;
+        }
+        .palette-type {
+            font-weight: 600;
+            color: #1d4a72;
+        }
+        .palette-value {
+            background: white;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
         .signature-canvas {
             border: 2px solid #b9cfe6;
             border-radius: 20px;
@@ -741,7 +753,8 @@
             border-radius: 30px;
             cursor: pointer;
             font-size: 0.9rem;
-            margin-left: 10px;
+            margin-top: 10px;
+            width: 100%;
         }
         
         /* Custom Confirm Modal */
@@ -842,6 +855,135 @@
         .driver-selector option {
             padding: 10px;
         }
+        
+        /* Marqueurs numérotés */
+        .numbered-marker {
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 16px;
+            border: 2px solid white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+        .numbered-marker.en_cours {
+            background-color: #9c27b0;
+        }
+        .numbered-marker.prepare {
+            background-color: #ff9800;
+        }
+        .numbered-marker.livre {
+            background-color: #4caf50;
+        }
+        .start-marker {
+            font-size: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        
+        /* Badge heure de départ */
+        .departure-badge {
+            background: #fff3e0;
+            border: 2px solid #ff9800;
+            border-radius: 30px;
+            padding: 8px 15px;
+            margin-bottom: 15px;
+            display: inline-block;
+            font-weight: 600;
+        }
+        .departure-badge i {
+            color: #e65100;
+            margin-right: 5px;
+        }
+        
+        /* Légende des segments */
+        .route-legend {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 1000;
+            max-width: 200px;
+            font-size: 0.85rem;
+            border: 1px solid #ddd;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+            gap: 8px;
+        }
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+
+        /* Badge pour responsable entrepôt */
+        .status-badge.responsable { background: #e1bee7; color: #4a148c; }
+        .user-type.responsable { background: #d1c4e9; color: #311b92; padding: 2px 10px; border-radius: 20px; }
+        
+        /* Style pour les sections visibles par responsable */
+        .responsible-section {
+            background: #f3e5f5;
+            border-radius: 24px;
+            padding: 16px;
+            margin-bottom: 20px;
+            border: 2px solid #9c27b0;
+        }
+        .responsible-section h3 {
+            color: #4a148c;
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+        }
+
+        /* Compteurs palette */
+        .counter-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+        .counter-label {
+            font-weight: 600;
+            color: #1d4a72;
+        }
+        .counter-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .counter-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid #b9cfe6;
+            background: white;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .counter-btn:hover {
+            background: #f0f0f0;
+        }
+        .counter-value {
+            width: 60px;
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            padding: 8px;
+            border: 2px solid #b9cfe6;
+            border-radius: 20px;
+        }
     </style>
 </head>
 <body>
@@ -937,6 +1079,7 @@
                 <select id="editUserType">
                     <option value="preparateur">Préparateur</option>
                     <option value="chauffeur">Chauffeur</option>
+                    <option value="responsable">Responsable d'entrepôt</option>
                 </select>
             </div>
             <div class="modal-actions">
@@ -973,6 +1116,46 @@
         </div>
     </div>
 
+    <!-- Modal de comptage palettes -->
+    <div id="paletteCountModal" class="modal-overlay" style="display: none;">
+        <div class="modal-box" style="max-width: 450px;">
+            <h3>📦 Palettes non rendues</h3>
+            <p style="color: #666; margin-bottom: 25px;">Combien de palettes ne sont pas rendues ?</p>
+            
+            <div style="margin-bottom: 25px;">
+                <div class="counter-container">
+                    <span class="counter-label">🇪🇺 Palettes Europe (1.2m x 0.8m)</span>
+                    <div class="counter-controls">
+                        <button class="counter-btn" id="euroMinusBtn">−</button>
+                        <input type="number" id="euroPaletteCount" class="counter-value" value="0" min="0" readonly>
+                        <button class="counter-btn" id="euroPlusBtn">+</button>
+                    </div>
+                </div>
+                
+                <div class="counter-container">
+                    <span class="counter-label">📏 Palettes Standard (1.0m x 1.2m)</span>
+                    <div class="counter-controls">
+                        <button class="counter-btn" id="standardMinusBtn">−</button>
+                        <input type="number" id="standardPaletteCount" class="counter-value" value="0" min="0" readonly>
+                        <button class="counter-btn" id="standardPlusBtn">+</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="background: #f5f5f5; border-radius: 20px; padding: 15px; margin-bottom: 20px;">
+                <div style="display: flex; justify-content: space-between; font-weight: bold;">
+                    <span>Total:</span>
+                    <span id="totalPaletteCount">0</span>
+                </div>
+            </div>
+            
+            <div class="modal-actions">
+                <button class="btn-delete" id="cancelPaletteBtn">Annuler</button>
+                <button class="btn-validate" id="savePaletteBtn">Confirmer</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Custom Confirm Modal -->
     <div id="confirmModal" class="confirm-modal" style="display: none;">
         <div class="confirm-box">
@@ -993,7 +1176,7 @@
             <button class="logout-btn" id="logoutBtn">Déconnexion</button>
         </div>
 
-        <!-- Section admin -->
+        <!-- Section admin (visible uniquement pour admin) -->
         <div class="admin-section" id="adminSection" style="display: none;">
             <h3>👥 Gestion des utilisateurs</h3>
             <div class="add-user-form">
@@ -1010,6 +1193,7 @@
                     <select id="newUserType">
                         <option value="preparateur">Préparateur</option>
                         <option value="chauffeur">Chauffeur</option>
+                        <option value="responsable">Responsable d'entrepôt</option>
                     </select>
                 </div>
                 <button class="btn-add-user" id="createUserBtn">➕ Créer</button>
@@ -1042,7 +1226,7 @@
                 </div>
             </div>
             
-            <!-- Sélecteur de chauffeur pour l'admin -->
+            <!-- Sélecteur de chauffeur pour l'admin seulement -->
             <div class="driver-selector-container" id="adminDriverSelector" style="display: none;">
                 <div class="driver-selector-title">👤 Sélectionner un chauffeur</div>
                 <select id="adminDriverSelect" class="driver-selector">
@@ -1052,11 +1236,12 @@
             
             <div class="main-layout">
                 <div class="left-panel">
-                    <!-- Carte : visible pour admin et chauffeur -->
+                    <!-- Carte - seulement pour chauffeur et admin -->
                     <div class="map-container" id="mapContainer">
                         <div class="section-title">🗺️ Carte des livraisons</div>
                         <div id="map"></div>
-                        <button class="geocode-btn" id="geocodeAllBtn" style="margin-top:10px;">📍 Géocoder toutes les adresses</button>
+                        <!-- Bouton géocodage caché pour éviter les erreurs CORS -->
+                        <button class="geocode-btn" id="geocodeAllBtn" style="display: none;">📍 Géocoder toutes les adresses</button>
                     </div>
                     
                     <div class="section-card" id="addOrderSection" style="display: none;">
@@ -1090,7 +1275,7 @@
                     <div id="ordersByDriver"></div>
                 </div>
                 <div class="right-panel">
-                    <!-- Itinéraire : visible pour admin et chauffeur -->
+                    <!-- Itinéraire - seulement pour chauffeur et admin -->
                     <div id="routePanel">
                         <div class="route-header">
                             <h3>🗺️ Itinéraire</h3>
@@ -1099,6 +1284,9 @@
                         <div id="routeOutput">
                             <div id="startPointInfo" class="start-point">
                                 <strong>🚩 Départ:</strong> 98 Rue Anselme Rondenay, 94400 Vitry-sur-Seine
+                            </div>
+                            <div id="departureTimeInfo" class="departure-badge" style="display: none;">
+                                <i>🕒</i> Heure de départ: <span id="departureTimeDisplay">10:00</span>
                             </div>
                             <ul class="route-steps" id="routeStepsList">
                                 <li style="text-align:center; color:#8899bb;">Cliquez sur "Optimiser" pour générer l'itinéraire</li>
@@ -1113,6 +1301,7 @@
         <!-- Onglet Tâches -->
         <div id="tab-tasks" class="tab-content">
             <div class="grid-2">
+                <!-- Section de création de tâches (visible pour admin et responsable) -->
                 <div class="section-card" id="addTaskSection" style="display: none;">
                     <div class="section-title">📋 Nouvelle tâche</div>
                     <div class="input-row">
@@ -1130,7 +1319,7 @@
                     <button class="btn-add" id="addTaskBtn" style="width:100%;">➕ Créer la tâche</button>
                 </div>
                 <div class="section-card" style="grid-column: span 2;">
-                    <div class="section-title">📋 Mes tâches</div>
+                    <div class="section-title">📋 Liste des tâches</div>
                     <div id="tasksList" class="items-list"></div>
                 </div>
             </div>
@@ -1180,14 +1369,23 @@
             const SUPABASE_KEY = 'sb_publishable_Skv1pqDmPG40gYFIDuQoGA_EUhMzXwV';
             const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-            const USER_TYPES = { ADMIN: 'admin', PREPARATEUR: 'preparateur', CHAUFFEUR: 'chauffeur' };
+            const USER_TYPES = { 
+                ADMIN: 'admin', 
+                PREPARATEUR: 'preparateur', 
+                CHAUFFEUR: 'chauffeur',
+                RESPONSABLE: 'responsable'
+            };
             const ORDER_STATUS = { EN_ATTENTE: 'en_attente', PREPARE: 'prepare', EN_COURS: 'en_cours', LIVRE: 'livre' };
             const START_POINT = { address: '98 Rue Anselme Rondenay, 94400 Vitry-sur-Seine', lat: 48.7897, lon: 2.3923 };
 
             let currentUser = null, currentUserType = null, currentDate = new Date().toISOString().split('T')[0];
-            let map = null, mapMarkers = [], signaturePad = null, currentOrderId = null, currentTransportId = null, currentEditOrderId = null, currentEditTaskId = null, currentEditUserId = null;
+            let map = null, mapMarkers = [], routeSegments = [], signaturePad = null;
+            let currentOrderId = null, currentTransportId = null, currentEditOrderId = null, currentEditTaskId = null, currentEditUserId = null;
             let confirmResolve = null;
-            let selectedDriver = null; // Pour l'admin
+            let selectedDriver = null;
+            let allNonDeliveredOrders = [];
+            let currentPaletteTransportId = null;
+            let paletteResolve = null;
 
             // Éléments DOM
             const loginOverlay = document.getElementById('loginOverlay');
@@ -1214,6 +1412,8 @@
             const routeStepsList = document.getElementById('routeStepsList');
             const startPointInfo = document.getElementById('startPointInfo');
             const routeStatus = document.getElementById('routeStatus');
+            const departureTimeInfo = document.getElementById('departureTimeInfo');
+            const departureTimeDisplay = document.getElementById('departureTimeDisplay');
             const newUsername = document.getElementById('newUsername');
             const newPassword = document.getElementById('newPassword');
             const newUserType = document.getElementById('newUserType');
@@ -1224,14 +1424,14 @@
             const routePanel = document.getElementById('routePanel');
             const adminDriverSelector = document.getElementById('adminDriverSelector');
             const adminDriverSelect = document.getElementById('adminDriverSelect');
-
+            
             // Tâches
             const addTaskSection = document.getElementById('addTaskSection');
             const taskDescription = document.getElementById('taskDescription');
             const taskAssignee = document.getElementById('taskAssignee');
             const addTaskBtn = document.getElementById('addTaskBtn');
             const tasksList = document.getElementById('tasksList');
-
+            
             // Transports
             const addTransportSection = document.getElementById('addTransportSection');
             const transportCompany = document.getElementById('transportCompany');
@@ -1240,7 +1440,19 @@
             const transportPaletteCount = document.getElementById('transportPaletteCount');
             const addTransportBtn = document.getElementById('addTransportBtn');
             const transportsList = document.getElementById('transportsList');
-
+            
+            // Palette Modal
+            const paletteCountModal = document.getElementById('paletteCountModal');
+            const euroPaletteCount = document.getElementById('euroPaletteCount');
+            const standardPaletteCount = document.getElementById('standardPaletteCount');
+            const euroMinusBtn = document.getElementById('euroMinusBtn');
+            const euroPlusBtn = document.getElementById('euroPlusBtn');
+            const standardMinusBtn = document.getElementById('standardMinusBtn');
+            const standardPlusBtn = document.getElementById('standardPlusBtn');
+            const totalPaletteCount = document.getElementById('totalPaletteCount');
+            const cancelPaletteBtn = document.getElementById('cancelPaletteBtn');
+            const savePaletteBtn = document.getElementById('savePaletteBtn');
+            
             // Modals
             const signatureModal = document.getElementById('signatureModal');
             const signatureCanvas = document.getElementById('signatureCanvas');
@@ -1250,30 +1462,23 @@
             const viewSignatureModal = document.getElementById('viewSignatureModal');
             const viewSignatureImage = document.getElementById('viewSignatureImage');
             const closeViewSignatureBtn = document.getElementById('closeViewSignatureBtn');
-            
-            // Edit Order Modal
             const editOrderModal = document.getElementById('editOrderModal');
             const editOrderCustomer = document.getElementById('editOrderCustomer');
             const editOrderAddr = document.getElementById('editOrderAddr');
             const editOrderDriver = document.getElementById('editOrderDriver');
             const cancelEditOrderBtn = document.getElementById('cancelEditOrderBtn');
             const saveEditOrderBtn = document.getElementById('saveEditOrderBtn');
-            
-            // Edit Task Modal
             const editTaskModal = document.getElementById('editTaskModal');
             const editTaskDescription = document.getElementById('editTaskDescription');
             const editTaskAssignee = document.getElementById('editTaskAssignee');
             const cancelEditTaskBtn = document.getElementById('cancelEditTaskBtn');
             const saveEditTaskBtn = document.getElementById('saveEditTaskBtn');
-            
-            // Edit User Modal
             const editUserModal = document.getElementById('editUserModal');
             const editUserUsername = document.getElementById('editUserUsername');
             const editUserPassword = document.getElementById('editUserPassword');
             const editUserType = document.getElementById('editUserType');
             const cancelEditUserBtn = document.getElementById('cancelEditUserBtn');
             const saveEditUserBtn = document.getElementById('saveEditUserBtn');
-            
             const editTransportModal = document.getElementById('editTransportModal');
             const editTransportCompany = document.getElementById('editTransportCompany');
             const editTransportCustomer = document.getElementById('editTransportCustomer');
@@ -1281,48 +1486,38 @@
             const editTransportPaletteCount = document.getElementById('editTransportPaletteCount');
             const cancelEditTransportBtn = document.getElementById('cancelEditTransportBtn');
             const saveEditTransportBtn = document.getElementById('saveEditTransportBtn');
-            
-            // Confirm Modal
             const confirmModal = document.getElementById('confirmModal');
             const confirmTitle = document.getElementById('confirmTitle');
             const confirmMessage = document.getElementById('confirmMessage');
             const confirmYesBtn = document.getElementById('confirmYesBtn');
             const confirmNoBtn = document.getElementById('confirmNoBtn');
 
-            // ==================== Gestion de la session ====================
+            // ==================== Gestion de session ====================
             function saveSession(username, userType, remember) {
                 if (remember) {
                     localStorage.setItem('rememberedUser', username);
                     localStorage.setItem('rememberedUserType', userType);
-                    // Nettoyer sessionStorage
                     sessionStorage.removeItem('currentUser');
                     sessionStorage.removeItem('currentUserType');
                 } else {
                     sessionStorage.setItem('currentUser', username);
                     sessionStorage.setItem('currentUserType', userType);
-                    // Nettoyer localStorage
                     localStorage.removeItem('rememberedUser');
                     localStorage.removeItem('rememberedUserType');
                 }
             }
 
             function loadSession() {
-                // Vérifier d'abord localStorage (remember me)
                 const rememberedUser = localStorage.getItem('rememberedUser');
                 const rememberedUserType = localStorage.getItem('rememberedUserType');
-                
                 if (rememberedUser && rememberedUserType) {
                     return { username: rememberedUser, userType: rememberedUserType };
                 }
-                
-                // Sinon vérifier sessionStorage
                 const sessionUser = sessionStorage.getItem('currentUser');
                 const sessionUserType = sessionStorage.getItem('currentUserType');
-                
                 if (sessionUser && sessionUserType) {
                     return { username: sessionUser, userType: sessionUserType };
                 }
-                
                 return null;
             }
 
@@ -1333,7 +1528,7 @@
                 sessionStorage.removeItem('currentUserType');
             }
 
-            // ==================== Custom Confirm Function ====================
+            // ==================== Custom Confirm ====================
             function showConfirm(title, message) {
                 return new Promise((resolve) => {
                     confirmResolve = resolve;
@@ -1353,11 +1548,68 @@
                 if (confirmResolve) confirmResolve(false);
             });
 
-            // ==================== Fonctions globales pour les boutons onclick ====================
+            // ==================== Palette Modal ====================
+            function showPaletteModal() {
+                return new Promise((resolve) => {
+                    paletteResolve = resolve;
+                    euroPaletteCount.value = '0';
+                    standardPaletteCount.value = '0';
+                    updateTotal();
+                    paletteCountModal.style.display = 'flex';
+                });
+            }
+
+            function updateTotal() {
+                const total = (parseInt(euroPaletteCount.value) || 0) + (parseInt(standardPaletteCount.value) || 0);
+                totalPaletteCount.textContent = total;
+            }
+
+            euroPlusBtn.addEventListener('click', () => {
+                euroPaletteCount.value = (parseInt(euroPaletteCount.value) || 0) + 1;
+                updateTotal();
+            });
+
+            euroMinusBtn.addEventListener('click', () => {
+                const val = (parseInt(euroPaletteCount.value) || 0) - 1;
+                if (val >= 0) euroPaletteCount.value = val;
+                updateTotal();
+            });
+
+            standardPlusBtn.addEventListener('click', () => {
+                standardPaletteCount.value = (parseInt(standardPaletteCount.value) || 0) + 1;
+                updateTotal();
+            });
+
+            standardMinusBtn.addEventListener('click', () => {
+                const val = (parseInt(standardPaletteCount.value) || 0) - 1;
+                if (val >= 0) standardPaletteCount.value = val;
+                updateTotal();
+            });
+
+            cancelPaletteBtn.addEventListener('click', () => {
+                paletteCountModal.style.display = 'none';
+                if (paletteResolve) {
+                    paletteResolve({ cancelled: true });
+                    paletteResolve = null;
+                }
+            });
+
+            savePaletteBtn.addEventListener('click', () => {
+                paletteCountModal.style.display = 'none';
+                if (paletteResolve) {
+                    paletteResolve({
+                        cancelled: false,
+                        euro: parseInt(euroPaletteCount.value) || 0,
+                        standard: parseInt(standardPaletteCount.value) || 0
+                    });
+                    paletteResolve = null;
+                }
+            });
+
+            // ==================== Fonctions globales ====================
             window.prepareOrder = async function(orderId) {
-                const confirmed = await showConfirm('Préparer la commande', 'Confirmer la préparation de cette commande ?');
+                const confirmed = await showConfirm('Préparer la commande', 'Confirmer la préparation ?');
                 if (!confirmed) return;
-                
                 const { error } = await supabase
                     .from('orders')
                     .update({
@@ -1370,7 +1622,7 @@
             };
 
             window.departOrder = async function(orderId) {
-                const confirmed = await showConfirm('Départ en livraison', 'Confirmer le départ pour cette livraison ?');
+                const confirmed = await showConfirm('Démarrer la livraison', 'Confirmer le départ ?');
                 if (!confirmed) return;
                 
                 const { error } = await supabase
@@ -1380,7 +1632,10 @@
                         driver_departure_at: new Date().toISOString()
                     })
                     .eq('id', orderId);
-                if (!error) await loadOrders();
+                    
+                if (!error) {
+                    await loadOrders();
+                }
             };
 
             window.openSignatureModal = function(orderId) {
@@ -1391,9 +1646,8 @@
             };
 
             window.completeTask = async function(taskId) {
-                const confirmed = await showConfirm('Terminer la tâche', 'Confirmer que cette tâche est terminée ?');
+                const confirmed = await showConfirm('Terminer la tâche', 'Confirmer ?');
                 if (!confirmed) return;
-                
                 const { error } = await supabase
                     .from('tasks')
                     .update({
@@ -1405,35 +1659,50 @@
                 if (!error) await loadTasks();
             };
 
-            // Les fonctions transports ne sont accessibles qu'aux admin/préparateur
             window.departTransport = async function(transportId) {
                 if (currentUserType === USER_TYPES.CHAUFFEUR) return;
                 
-                const paletteRendu = await showConfirm('Palettes rendues', 'Les palettes ont-elles été rendues ?');
+                const confirmed = await showConfirm('Départ transport', 'Confirmer le départ du transport ?');
+                if (!confirmed) return;
                 
-                let paletteCount = 0;
-                if (!paletteRendu) {
-                    const count = prompt('Nombre de palettes non rendues:', '1');
-                    if (count === null) return;
-                    paletteCount = parseInt(count) || 1;
+                const paletteRendu = await showConfirm('Palettes rendues', 'Les palettes ont-elles toutes été rendues ?');
+                
+                if (paletteRendu) {
+                    // Toutes les palettes sont rendues
+                    const { error } = await supabase
+                        .from('transports')
+                        .update({
+                            departed: true,
+                            departed_at: new Date().toISOString(),
+                            departed_by: currentUser,
+                            palette_rendu: true,
+                            palette_count: 0,
+                            palette_count_euro: 0
+                        })
+                        .eq('id', transportId);
+                    if (!error) await loadTransports();
+                } else {
+                    // Demander le nombre de palettes non rendues
+                    const paletteData = await showPaletteModal();
+                    if (paletteData && !paletteData.cancelled) {
+                        const { error } = await supabase
+                            .from('transports')
+                            .update({
+                                departed: true,
+                                departed_at: new Date().toISOString(),
+                                departed_by: currentUser,
+                                palette_rendu: false,
+                                palette_count: paletteData.standard,
+                                palette_count_euro: paletteData.euro
+                            })
+                            .eq('id', transportId);
+                        if (!error) await loadTransports();
+                    }
                 }
-                
-                const { error } = await supabase
-                    .from('transports')
-                    .update({
-                        departed: true,
-                        departed_at: new Date().toISOString(),
-                        departed_by: currentUser,
-                        palette_rendu: paletteRendu,
-                        palette_count: paletteCount
-                    })
-                    .eq('id', transportId);
-                if (!error) await loadTransports();
             };
 
             window.editTransport = async function(transportId) {
-                if (currentUserType === USER_TYPES.CHAUFFEUR) return;
-                
+                if (currentUserType !== USER_TYPES.ADMIN) return;
                 const { data, error } = await supabase
                     .from('transports')
                     .select('*')
@@ -1450,11 +1719,9 @@
             };
 
             window.deleteTransport = async function(transportId) {
-                if (currentUserType === USER_TYPES.CHAUFFEUR) return;
-                
-                const confirmed = await showConfirm('Supprimer le transport', 'Êtes-vous sûr de vouloir supprimer ce transport ?');
+                if (currentUserType !== USER_TYPES.ADMIN) return;
+                const confirmed = await showConfirm('Supprimer', 'Supprimer ce transport ?');
                 if (!confirmed) return;
-                
                 const { error } = await supabase
                     .from('transports')
                     .delete()
@@ -1462,8 +1729,8 @@
                 if (!error) await loadTransports();
             };
 
-            // Admin order functions
             window.editOrder = async function(orderId) {
+                if (currentUserType !== USER_TYPES.ADMIN) return;
                 const { data, error } = await supabase
                     .from('orders')
                     .select('*')
@@ -1473,19 +1740,16 @@
                     currentEditOrderId = orderId;
                     editOrderCustomer.value = data.customer_name || '';
                     editOrderAddr.value = data.destination || '';
-                    
-                    // Load drivers into select
                     await loadDriversIntoSelect(editOrderDriver);
                     editOrderDriver.value = data.driver || '';
-                    
                     editOrderModal.style.display = 'flex';
                 }
             };
 
             window.deleteOrder = async function(orderId) {
-                const confirmed = await showConfirm('Supprimer la commande', 'Êtes-vous sûr de vouloir supprimer cette commande définitivement ?');
+                if (currentUserType !== USER_TYPES.ADMIN) return;
+                const confirmed = await showConfirm('Supprimer', 'Supprimer cette commande ?');
                 if (!confirmed) return;
-                
                 const { error } = await supabase
                     .from('orders')
                     .delete()
@@ -1493,7 +1757,6 @@
                 if (!error) await loadOrders();
             };
 
-            // Admin task functions
             window.editTask = async function(taskId) {
                 const { data, error } = await supabase
                     .from('tasks')
@@ -1501,30 +1764,47 @@
                     .eq('id', taskId)
                     .single();
                 if (data) {
+                    // Responsable peut seulement modifier ses propres tâches
+                    if (currentUserType === USER_TYPES.RESPONSABLE && data.created_by !== currentUser) {
+                        alert('Vous ne pouvez modifier que les tâches que vous avez créées');
+                        return;
+                    }
+                    
                     currentEditTaskId = taskId;
                     editTaskDescription.value = data.description || '';
-                    
-                    // Load assignees into select
                     await loadTaskAssigneesIntoSelect(editTaskAssignee);
                     editTaskAssignee.value = data.assigned_to || '';
-                    
                     editTaskModal.style.display = 'flex';
                 }
             };
 
             window.deleteTask = async function(taskId) {
-                const confirmed = await showConfirm('Supprimer la tâche', 'Êtes-vous sûr de vouloir supprimer cette tâche ?');
-                if (!confirmed) return;
-                
-                const { error } = await supabase
+                const { data, error } = await supabase
                     .from('tasks')
-                    .delete()
-                    .eq('id', taskId);
-                if (!error) await loadTasks();
+                    .select('created_by')
+                    .eq('id', taskId)
+                    .single();
+                
+                if (data) {
+                    // Responsable peut seulement supprimer ses propres tâches
+                    if (currentUserType === USER_TYPES.RESPONSABLE && data.created_by !== currentUser) {
+                        alert('Vous ne pouvez supprimer que les tâches que vous avez créées');
+                        return;
+                    }
+                    
+                    const confirmed = await showConfirm('Supprimer', 'Supprimer cette tâche ?');
+                    if (!confirmed) return;
+                    
+                    const { error } = await supabase
+                        .from('tasks')
+                        .delete()
+                        .eq('id', taskId);
+                    if (!error) await loadTasks();
+                }
             };
 
-            // Admin user functions
             window.editUser = async function(username) {
+                if (currentUserType !== USER_TYPES.ADMIN) return;
                 const { data, error } = await supabase
                     .from('users')
                     .select('*')
@@ -1541,10 +1821,8 @@
 
             window.deleteUser = async function(username) {
                 if (currentUserType !== USER_TYPES.ADMIN) return;
-                
-                const confirmed = await showConfirm('Supprimer l\'utilisateur', `Êtes-vous sûr de vouloir supprimer l'utilisateur ${username} ?`);
+                const confirmed = await showConfirm('Supprimer', `Supprimer ${username} ?`);
                 if (!confirmed) return;
-                
                 const { error } = await supabase
                     .from('users')
                     .delete()
@@ -1562,54 +1840,26 @@
                 viewSignatureModal.style.display = 'flex';
             };
 
+            window.returnToDepot = async function() {
+                const confirmed = await showConfirm('Retour au dépôt', 'Confirmer le retour au dépôt ?');
+                if (!confirmed) return;
+                alert('✅ Bon retour au dépôt !');
+            };
+
             closeViewSignatureBtn.addEventListener('click', () => {
                 viewSignatureModal.style.display = 'none';
             });
 
-            // ==================== Fonction de géocodage ====================
+            // ==================== Géocodage (désactivé à cause de CORS) ====================
             async function geocodeAddress(address) {
-                try {
-                    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`;
-                    const response = await fetch(url, {
-                        headers: { 'User-Agent': 'Livreurs-App/1.0' }
-                    });
-                    const data = await response.json();
-                    if (data && data.length > 0) {
-                        return {
-                            lat: parseFloat(data[0].lat),
-                            lon: parseFloat(data[0].lon)
-                        };
-                    }
-                    return null;
-                } catch (error) {
-                    console.error('Erreur géocodage:', error);
-                    return null;
-                }
+                // Désactivé à cause des problèmes CORS avec Nominatim
+                console.log('Géocodage désactivé - utilisation des coordonnées par défaut');
+                return null;
             }
 
-            // ==================== Géocoder toutes les commandes ====================
             async function geocodeAllOrders() {
-                const { data: orders, error } = await supabase
-                    .from('orders')
-                    .select('*')
-                    .is('lat', null);
-                
-                if (error || !orders) return;
-                
-                for (const order of orders) {
-                    const coords = await geocodeAddress(order.destination);
-                    if (coords) {
-                        await supabase
-                            .from('orders')
-                            .update({ lat: coords.lat, lon: coords.lon })
-                            .eq('id', order.id);
-                    }
-                }
-                await loadOrders();
-            }
-
-            if (geocodeAllBtn) {
-                geocodeAllBtn.addEventListener('click', geocodeAllOrders);
+                console.log('Géocodage automatique désactivé à cause des restrictions CORS');
+                return;
             }
 
             // ==================== Initialisation ====================
@@ -1632,13 +1882,11 @@
             }
             if (timeType) timeType.addEventListener('change', renderTimeInput);
 
-            // ==================== Charger les chauffeurs pour le sélecteur admin ====================
             async function loadAdminDrivers() {
                 const { data, error } = await supabase
                     .from('users')
                     .select('username')
                     .eq('user_type', USER_TYPES.CHAUFFEUR);
-                    
                 if (data) {
                     adminDriverSelect.innerHTML = '<option value="">Tous les chauffeurs</option>';
                     data.forEach(driver => {
@@ -1649,6 +1897,393 @@
                     });
                 }
             }
+
+            // ==================== Carte MapLibre ====================
+            function initMap() {
+                if (!map) {
+                    map = new maplibregl.Map({
+                        container: 'map',
+                        style: {
+                            version: 8,
+                            sources: {
+                                'osm': {
+                                    type: 'raster',
+                                    tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+                                    tileSize: 256,
+                                    attribution: '© OpenStreetMap'
+                                }
+                            },
+                            layers: [{
+                                id: 'osm',
+                                type: 'raster',
+                                source: 'osm',
+                                minzoom: 0,
+                                maxzoom: 19
+                            }]
+                        },
+                        center: [START_POINT.lon, START_POINT.lat],
+                        zoom: 11
+                    });
+                    map.addControl(new maplibregl.NavigationControl(), 'top-right');
+                }
+            }
+
+            // ==================== Obtenir un itinéraire réel via OSRM ====================
+            async function getRealRoute(waypoints) {
+                const waypointStr = waypoints.map(p => `${p[0]},${p[1]}`).join(';');
+                
+                try {
+                    const response = await fetch(`https://router.project-osrm.org/route/v1/driving/${waypointStr}?overview=full&steps=true&geometries=geojson&annotations=true`);
+                    const data = await response.json();
+                    
+                    if (data.routes && data.routes[0]) {
+                        const legs = data.routes[0].legs;
+                        const distances = legs.map(leg => leg.distance);
+                        const durations = legs.map(leg => leg.duration);
+                        
+                        return {
+                            distance: data.routes[0].distance,
+                            duration: data.routes[0].duration,
+                            geometry: data.routes[0].geometry,
+                            distances: distances,
+                            durations: durations,
+                            legs: legs
+                        };
+                    }
+                    return null;
+                } catch (error) {
+                    console.error('Erreur OSRM:', error);
+                    return null;
+                }
+            }
+
+            // ==================== Afficher la route réelle depuis OSRM ====================
+            function displayRealRoute(geometry) {
+                if (!map) return;
+
+                if (routeSegments.length > 0) {
+                    routeSegments.forEach(segment => {
+                        if (map.getLayer(segment.layerId)) map.removeLayer(segment.layerId);
+                        if (map.getSource(segment.sourceId)) map.removeSource(segment.sourceId);
+                    });
+                    routeSegments = [];
+                }
+
+                const oldLegend = document.getElementById('route-legend');
+                if (oldLegend) oldLegend.remove();
+
+                const sourceId = 'osrm-route';
+                const layerId = 'osrm-route-layer';
+                
+                map.addSource(sourceId, {
+                    type: 'geojson',
+                    data: {
+                        type: 'Feature',
+                        properties: {},
+                        geometry: geometry
+                    }
+                });
+
+                map.addLayer({
+                    id: layerId,
+                    type: 'line',
+                    source: sourceId,
+                    layout: {
+                        'line-join': 'round',
+                        'line-cap': 'round'
+                    },
+                    paint: {
+                        'line-color': '#2f6d9e',
+                        'line-width': 5,
+                        'line-opacity': 0.8
+                    }
+                });
+
+                routeSegments.push({
+                    sourceId: sourceId,
+                    layerId: layerId
+                });
+
+                const legend = document.createElement('div');
+                legend.id = 'route-legend';
+                legend.className = 'route-legend';
+                legend.innerHTML = '<strong>📍 Itinéraire réel</strong><br><span style="color:#2f6d9e;">●</span> Route calculée';
+                document.querySelector('.map-container').appendChild(legend);
+            }
+
+            // ==================== Mise à jour de la carte ====================
+            async function updateMap(orders, routeWaypoints = null) {
+                if (!map) return;
+                
+                // Seulement chauffeur et admin peuvent voir la carte
+                if (currentUserType !== USER_TYPES.CHAUFFEUR && currentUserType !== USER_TYPES.ADMIN) return;
+
+                if (mapMarkers.length > 0) {
+                    mapMarkers.forEach(marker => marker.remove());
+                    mapMarkers = [];
+                }
+
+                let relevantOrders = orders;
+                if (currentUserType === USER_TYPES.CHAUFFEUR) {
+                    relevantOrders = orders.filter(o => o.driver === currentUser);
+                }
+
+                const deliveredOrders = relevantOrders.filter(o => o.status === ORDER_STATUS.LIVRE);
+                let currentPosition = START_POINT;
+                
+                if (deliveredOrders.length > 0) {
+                    deliveredOrders.sort((a, b) => new Date(b.delivered_at) - new Date(a.delivered_at));
+                    const lastDelivered = deliveredOrders[0];
+                    if (lastDelivered.lat && lastDelivered.lon) {
+                        currentPosition = {
+                            address: lastDelivered.destination,
+                            lat: lastDelivered.lat,
+                            lon: lastDelivered.lon
+                        };
+                    }
+                }
+
+                const startEl = document.createElement('div');
+                startEl.className = 'start-marker';
+                startEl.innerHTML = '🚩';
+                startEl.style.fontSize = '30px';
+                startEl.style.textShadow = '2px 2px 4px rgba(0,0,0,0.5)';
+                
+                new maplibregl.Marker({ element: startEl })
+                    .setLngLat([currentPosition.lon, currentPosition.lat])
+                    .setPopup(new maplibregl.Popup().setHTML(`
+                        <strong>📍 Position actuelle</strong><br>
+                        ${currentPosition.address === START_POINT.address ? '🚚 Départ' : '📦 Dernière livraison'}<br>
+                        ${escapeHtml(currentPosition.address)}
+                    `))
+                    .addTo(map);
+
+                const depotEl = document.createElement('div');
+                depotEl.className = 'depot-marker';
+                depotEl.innerHTML = '🏁';
+                depotEl.style.fontSize = '30px';
+                depotEl.style.textShadow = '2px 2px 4px rgba(0,0,0,0.5)';
+                
+                new maplibregl.Marker({ element: depotEl })
+                    .setLngLat([START_POINT.lon, START_POINT.lat])
+                    .setPopup(new maplibregl.Popup().setHTML(`
+                        <strong>🏁 Retour au dépôt</strong><br>
+                        📍 ${escapeHtml(START_POINT.address)}
+                    `))
+                    .addTo(map);
+
+                const remainingOrders = relevantOrders.filter(o => o.status !== ORDER_STATUS.LIVRE && o.lat && o.lon);
+                
+                remainingOrders.forEach((point, index) => {
+                    if (!point.lat || !point.lon) return;
+                    
+                    const markerEl = document.createElement('div');
+                    markerEl.className = `numbered-marker ${point.status}`;
+                    markerEl.textContent = (index + 1).toString();
+                    
+                    let statusText = point.status === ORDER_STATUS.EN_COURS ? '🔵 En cours' : 
+                                    point.status === ORDER_STATUS.PREPARE ? '⏳ Prêt' : '';
+                    
+                    const marker = new maplibregl.Marker({ element: markerEl })
+                        .setLngLat([point.lon, point.lat])
+                        .setPopup(new maplibregl.Popup().setHTML(`
+                            <strong>${index + 1}. ${escapeHtml(point.customer_name)}</strong><br>
+                            📍 ${escapeHtml(point.destination)}<br>
+                            ⏰ ${formatTimeRequirement(point)}<br>
+                            ${statusText}
+                        `))
+                        .addTo(map);
+                    
+                    mapMarkers.push(marker);
+                });
+
+                if (remainingOrders.length > 0) {
+                    const bounds = new maplibregl.LngLatBounds();
+                    bounds.extend([currentPosition.lon, currentPosition.lat]);
+                    bounds.extend([START_POINT.lon, START_POINT.lat]);
+                    remainingOrders.forEach(p => bounds.extend([p.lon, p.lat]));
+                    map.fitBounds(bounds, { padding: 50, maxZoom: 15 });
+                } else if (deliveredOrders.length > 0) {
+                    const bounds = new maplibregl.LngLatBounds();
+                    bounds.extend([currentPosition.lon, currentPosition.lat]);
+                    bounds.extend([START_POINT.lon, START_POINT.lat]);
+                    map.fitBounds(bounds, { padding: 50, maxZoom: 15 });
+                }
+            }
+
+            // ==================== Optimisation d'itinéraire ====================
+            optimizeBtn.addEventListener('click', async () => {
+                // Seulement chauffeur et admin peuvent optimiser
+                if (currentUserType !== USER_TYPES.CHAUFFEUR && currentUserType !== USER_TYPES.ADMIN) {
+                    alert('Vous n\'avez pas accès à l\'optimisation');
+                    return;
+                }
+
+                let query = supabase
+                    .from('orders')
+                    .select('*')
+                    .eq('date', currentDate)
+                    .neq('status', ORDER_STATUS.LIVRE);
+                
+                if (currentUserType === USER_TYPES.CHAUFFEUR) {
+                    query = query.eq('driver', currentUser);
+                } else if (currentUserType === USER_TYPES.ADMIN && selectedDriver) {
+                    query = query.eq('driver', selectedDriver);
+                } else if (currentUserType === USER_TYPES.ADMIN && !selectedDriver) {
+                    alert('Veuillez sélectionner un chauffeur');
+                    return;
+                }
+                
+                const { data: orders, error } = await query;
+                if (!orders || orders.length === 0) {
+                    alert('Aucune livraison à planifier');
+                    return;
+                }
+                
+                routeStatus.innerHTML = '🔄 Calcul...';
+                
+                const { data: allOrders } = await supabase
+                    .from('orders')
+                    .select('*')
+                    .eq('date', currentDate)
+                    .eq('driver', orders[0].driver);
+                
+                const deliveredOrders = allOrders.filter(o => o.status === ORDER_STATUS.LIVRE);
+                let currentStartPoint = START_POINT;
+                
+                if (deliveredOrders.length > 0) {
+                    const lastDelivered = deliveredOrders[deliveredOrders.length - 1];
+                    if (lastDelivered.lat && lastDelivered.lon) {
+                        currentStartPoint = {
+                            address: lastDelivered.destination,
+                            lat: lastDelivered.lat,
+                            lon: lastDelivered.lon
+                        };
+                    }
+                }
+                
+                const withCoords = orders.filter(o => o.lat && o.lon);
+                if (withCoords.length === 0) {
+                    alert('Aucune coordonnée GPS');
+                    routeStatus.innerHTML = '❌ Échec';
+                    return;
+                }
+                
+                // Ne pas trier par ordre - laisser l'utilisateur choisir l'ordre
+                // withCoords.sort((a, b) => {
+                //     if (a.status === ORDER_STATUS.EN_COURS) return -1;
+                //     if (b.status === ORDER_STATUS.EN_COURS) return 1;
+                //     return getStartTimeMinutes(a) - getStartTimeMinutes(b);
+                // });
+                
+                const waypoints = [
+                    [currentStartPoint.lon, currentStartPoint.lat],
+                    ...withCoords.map(o => [o.lon, o.lat]),
+                    [START_POINT.lon, START_POINT.lat]
+                ];
+                
+                const route = await getRealRoute(waypoints);
+                
+                if (route) {
+                    displayRealRoute(route.geometry);
+                    await updateMap(allOrders, withCoords);
+                    
+                    const departureTime = new Date();
+                    departureTime.setHours(10, 0, 0, 0);
+                    departureTimeDisplay.textContent = departureTime.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+                    departureTimeInfo.style.display = 'inline-block';
+                    
+                    let stepsHtml = '';
+                    let totalDistance = 0;
+                    
+                    const startTimeStr = departureTime.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+                    
+                    stepsHtml += `
+                        <li style="background: #e8f5e9; border-left: 4px solid #4caf50;">
+                            <div style="display: flex; align-items: center;">
+                                <span style="background:#4caf50; color:white; width:28px; height:28px; display:flex; align-items:center; justify-content:center; border-radius:50%; margin-right:10px; font-weight:bold;">🚩</span>
+                                <div>
+                                    <strong>Position actuelle</strong><br>
+                                    📍 ${escapeHtml(currentStartPoint.address)}<br>
+                                    <span style="font-size:0.9rem; color:#666;">🕒 Départ à ${startTimeStr}</span>
+                                </div>
+                            </div>
+                        </li>
+                    `;
+                    
+                    let currentTime = new Date(departureTime);
+                    
+                    for (let i = 0; i < withCoords.length; i++) {
+                        const order = withCoords[i];
+                        
+                        const segmentDistance = route.distances[i] / 1000;
+                        const segmentDuration = route.durations[i];
+                        
+                        totalDistance += segmentDistance;
+                        
+                        currentTime = new Date(currentTime.getTime() + (segmentDuration * 1000));
+                        
+                        const arrivalTimeStr = currentTime.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+                        
+                        const statusIcon = order.status === ORDER_STATUS.EN_COURS ? '🔵' : '⏳';
+                        const statusColor = order.status === ORDER_STATUS.EN_COURS ? '#9c27b0' : '#ff9800';
+                        
+                        stepsHtml += `
+                            <li style="border-left: 4px solid ${statusColor};">
+                                <div style="display: flex; align-items: center;">
+                                    <span style="background:${statusColor}; color:white; width:28px; height:28px; display:flex; align-items:center; justify-content:center; border-radius:50%; margin-right:10px; font-weight:bold;">${i+1}</span>
+                                    <div style="flex:1;">
+                                        <strong>${statusIcon} ${escapeHtml(order.customer_name)}</strong><br>
+                                        📍 ${escapeHtml(order.destination)}<br>
+                                        <div style="display: flex; gap: 15px; margin-top: 5px; font-size:0.9rem; color:#666; flex-wrap: wrap;">
+                                            <span>🚗 ${segmentDistance.toFixed(1)} km</span>
+                                            <span>🕒 Arrivée: ${arrivalTimeStr}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </li>
+                        `;
+                        
+                        currentTime = new Date(currentTime.getTime() + 30 * 60 * 1000);
+                    }
+                    
+                    if (withCoords.length > 0) {
+                        const returnSegmentDistance = route.distances[withCoords.length] / 1000;
+                        const returnSegmentDuration = route.durations[withCoords.length];
+                        
+                        totalDistance += returnSegmentDistance;
+                        
+                        currentTime = new Date(currentTime.getTime() + (returnSegmentDuration * 1000));
+                        
+                        const returnTimeStr = currentTime.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+                        
+                        stepsHtml += `
+                            <li style="background: #e3f2fd; border-left: 4px solid #2196f3;">
+                                <div style="display: flex; align-items: center;">
+                                    <span style="background:#2196f3; color:white; width:28px; height:28px; display:flex; align-items:center; justify-content:center; border-radius:50%; margin-right:10px; font-weight:bold;">🏁</span>
+                                    <div>
+                                        <strong>Retour au dépôt</strong><br>
+                                        📍 98 Rue Anselme Rondenay<br>
+                                        <div style="display: flex; gap: 15px; margin-top: 5px; font-size:0.9rem; color:#666; flex-wrap: wrap;">
+                                            <span>🚗 ${returnSegmentDistance.toFixed(1)} km</span>
+                                            <span>🕒 Retour: ${returnTimeStr}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </li>
+                        `;
+                    }
+                    
+                    routeStepsList.innerHTML = stepsHtml;
+                    
+                    const totalDuration = Math.round((currentTime - departureTime) / (60 * 1000));
+                    routeStatus.innerHTML = `✅ ${totalDistance.toFixed(1)} km, ${totalDuration} min`;
+                    
+                } else {
+                    alert('Erreur de calcul avec OSRM');
+                    routeStatus.innerHTML = '❌ Échec';
+                }
+            });
 
             // ==================== Connexion ====================
             async function login(username, password, remember = false) {
@@ -1666,109 +2301,94 @@
                         currentUserDisplay.innerText = `👤 ${currentUser}`;
                         
                         const typeLabels = {
-                            'admin': 'Administrateur',
+                            'admin': 'Admin',
                             'preparateur': 'Préparateur',
-                            'chauffeur': 'Chauffeur'
+                            'chauffeur': 'Chauffeur',
+                            'responsable': 'Responsable entrepôt'
                         };
-                        userTypeDisplay.innerText = `(${typeLabels[currentUserType]})`;
+                        userTypeDisplay.innerText = `(${typeLabels[currentUserType] || currentUserType})`;
                         
-                        // Sauvegarder la session
                         saveSession(currentUser, currentUserType, remember);
                         
                         loginOverlay.style.display = 'none';
                         appContainer.style.display = 'block';
                         
-                        // Initialiser la carte après que le conteneur soit visible
-                        setTimeout(() => {
-                            initMap();
-                        }, 100);
+                        setTimeout(initMap, 100);
                         
                         const isAdmin = currentUserType === USER_TYPES.ADMIN;
                         const isPreparateur = currentUserType === USER_TYPES.PREPARATEUR;
                         const isChauffeur = currentUserType === USER_TYPES.CHAUFFEUR;
-                        const canCreateOrders = isAdmin;
-                        const canCreateTransports = isAdmin || isPreparateur;
+                        const isResponsable = currentUserType === USER_TYPES.RESPONSABLE;
                         
+                        // Section admin visible uniquement pour admin
                         adminSection.style.display = isAdmin ? 'block' : 'none';
                         if (isAdmin) {
                             await loadUsers();
                             await loadAdminDrivers();
                         }
                         
-                        // Afficher/cacher les éléments selon le type d'utilisateur
-                        if (isPreparateur) {
+                        // Carte et itinéraire - seulement pour chauffeur et admin
+                        if (isChauffeur || isAdmin) {
+                            mapContainer.style.display = 'block';
+                            routePanel.style.display = 'block';
+                            adminDriverSelector.style.display = isAdmin ? 'block' : 'none';
+                        } else {
                             mapContainer.style.display = 'none';
                             routePanel.style.display = 'none';
                             adminDriverSelector.style.display = 'none';
-                        } else {
-                            mapContainer.style.display = 'block';
-                            routePanel.style.display = 'block';
-                            if (isAdmin) {
-                                adminDriverSelector.style.display = 'block';
-                            } else {
-                                adminDriverSelector.style.display = 'none';
-                            }
                         }
                         
-                        addOrderSection.style.display = canCreateOrders ? 'block' : 'none';
+                        // Commandes : création uniquement pour admin
+                        addOrderSection.style.display = isAdmin ? 'block' : 'none';
                         await loadDrivers();
                         await loadOrders();
                         
-                        addTaskSection.style.display = isAdmin ? 'block' : 'none';
+                        // Tâches : création pour admin et responsable
+                        addTaskSection.style.display = (isAdmin || isResponsable) ? 'block' : 'none';
                         await loadTaskAssignees();
                         await loadTasks();
                         
-                        // Transports : visible pour admin et préparateur, caché pour chauffeur
-                        addTransportSection.style.display = canCreateTransports ? 'block' : 'none';
+                        // Transports : création pour admin et préparateur (responsable peut voir mais pas créer)
+                        addTransportSection.style.display = (isAdmin || isPreparateur) ? 'block' : 'none';
                         if (!isChauffeur) {
                             await loadTransports();
                         } else {
-                            // Pour chauffeur, on cache complètement l'onglet transports
                             const transportTab = document.querySelector('[data-tab="transports"]');
                             if (transportTab) transportTab.style.display = 'none';
                         }
-                        
-                        // Géocoder automatiquement après chargement
-                        setTimeout(geocodeAllOrders, 1000);
                         
                         return true;
                     }
                     return false;
                 } catch (error) {
-                    console.error('Erreur de connexion:', error);
+                    console.error('Erreur:', error);
                     return false;
                 }
             }
 
-            // Vérifier session au chargement
             const savedSession = loadSession();
             if (savedSession) {
-                // Reconnecter automatiquement sans vérifier le mot de passe
                 currentUser = savedSession.username;
                 currentUserType = savedSession.userType;
                 
-                // Afficher directement l'interface
                 currentUserDisplay.innerText = `👤 ${currentUser}`;
                 const typeLabels = {
-                    'admin': 'Administrateur',
+                    'admin': 'Admin',
                     'preparateur': 'Préparateur',
-                    'chauffeur': 'Chauffeur'
+                    'chauffeur': 'Chauffeur',
+                    'responsable': 'Responsable entrepôt'
                 };
-                userTypeDisplay.innerText = `(${typeLabels[currentUserType]})`;
+                userTypeDisplay.innerText = `(${typeLabels[currentUserType] || currentUserType})`;
                 
                 loginOverlay.style.display = 'none';
                 appContainer.style.display = 'block';
                 
-                // Initialiser la carte après que le conteneur soit visible
-                setTimeout(() => {
-                    initMap();
-                }, 100);
+                setTimeout(initMap, 100);
                 
                 const isAdmin = currentUserType === USER_TYPES.ADMIN;
                 const isPreparateur = currentUserType === USER_TYPES.PREPARATEUR;
                 const isChauffeur = currentUserType === USER_TYPES.CHAUFFEUR;
-                const canCreateOrders = isAdmin;
-                const canCreateTransports = isAdmin || isPreparateur;
+                const isResponsable = currentUserType === USER_TYPES.RESPONSABLE;
                 
                 adminSection.style.display = isAdmin ? 'block' : 'none';
                 if (isAdmin) {
@@ -1776,38 +2396,32 @@
                     loadAdminDrivers();
                 }
                 
-                // Afficher/cacher les éléments selon le type d'utilisateur
-                if (isPreparateur) {
+                // Carte et itinéraire - seulement pour chauffeur et admin
+                if (isChauffeur || isAdmin) {
+                    mapContainer.style.display = 'block';
+                    routePanel.style.display = 'block';
+                    adminDriverSelector.style.display = isAdmin ? 'block' : 'none';
+                } else {
                     mapContainer.style.display = 'none';
                     routePanel.style.display = 'none';
                     adminDriverSelector.style.display = 'none';
-                } else {
-                    mapContainer.style.display = 'block';
-                    routePanel.style.display = 'block';
-                    if (isAdmin) {
-                        adminDriverSelector.style.display = 'block';
-                    } else {
-                        adminDriverSelector.style.display = 'none';
-                    }
                 }
                 
-                addOrderSection.style.display = canCreateOrders ? 'block' : 'none';
+                addOrderSection.style.display = isAdmin ? 'block' : 'none';
                 loadDrivers();
                 loadOrders();
                 
-                addTaskSection.style.display = isAdmin ? 'block' : 'none';
+                addTaskSection.style.display = (isAdmin || isResponsable) ? 'block' : 'none';
                 loadTaskAssignees();
                 loadTasks();
                 
-                addTransportSection.style.display = canCreateTransports ? 'block' : 'none';
+                addTransportSection.style.display = (isAdmin || isPreparateur) ? 'block' : 'none';
                 if (!isChauffeur) {
                     loadTransports();
                 } else {
                     const transportTab = document.querySelector('[data-tab="transports"]');
                     if (transportTab) transportTab.style.display = 'none';
                 }
-                
-                setTimeout(geocodeAllOrders, 1000);
             }
 
             loginBtn.addEventListener('click', async () => {
@@ -1815,7 +2429,7 @@
                 const password = loginPassword.value.trim();
                 const remember = rememberMe.checked;
                 const success = await login(username, password, remember);
-                if (!success) alert('Nom d\'utilisateur ou mot de passe incorrect');
+                if (!success) alert('Identifiants incorrects');
             });
 
             loginPassword.addEventListener('keypress', (e) => {
@@ -1831,38 +2445,38 @@
                 loginUsername.value = '';
                 loginPassword.value = '';
                 rememberMe.checked = true;
-                // Réafficher l'onglet transports au cas où
                 const transportTab = document.querySelector('[data-tab="transports"]');
                 if (transportTab) transportTab.style.display = '';
             });
 
-            // ==================== Gestion des utilisateurs (Admin) ====================
+            // ==================== Gestion des utilisateurs ====================
             async function loadUsers() {
                 const { data, error } = await supabase
                     .from('users')
                     .select('*')
                     .order('created_at', { ascending: false });
-                
                 if (data) {
-                    // Filtrer pour exclure admin (par type)
-                    const filteredUsers = data.filter(user => user.user_type !== 'admin');
-                    renderUserTable(filteredUsers);
+                    const filtered = data.filter(u => u.user_type !== 'admin');
+                    renderUserTable(filtered);
                 }
             }
 
             function renderUserTable(users) {
                 let html = '';
                 users.forEach(user => {
-                    const typeLabel = user.user_type === 'preparateur' ? 'Préparateur' : 'Chauffeur';
-                    const typeClass = user.user_type === 'preparateur' ? 'preparateur' : 'chauffeur';
-                    
+                    const typeLabels = {
+                        'preparateur': 'Préparateur',
+                        'chauffeur': 'Chauffeur',
+                        'responsable': 'Responsable entrepôt'
+                    };
+                    const typeLabel = typeLabels[user.user_type] || user.user_type;
                     html += `
                         <tr>
                             <td>${escapeHtml(user.username)}</td>
-                            <td><span class="user-type ${typeClass}">${typeLabel}</span></td>
+                            <td><span class="user-type ${user.user_type}">${typeLabel}</span></td>
                             <td class="user-actions">
-                                <button class="btn-icon" onclick="editUser('${user.username}')" title="Modifier">✏️</button>
-                                <button class="btn-icon" onclick="deleteUser('${user.username}')" title="Supprimer">🗑️</button>
+                                <button class="btn-icon" onclick="editUser('${user.username}')">✏️</button>
+                                <button class="btn-icon" onclick="deleteUser('${user.username}')">🗑️</button>
                             </td>
                         </tr>
                     `;
@@ -1874,15 +2488,14 @@
                 const username = newUsername.value.trim();
                 const password = newPassword.value.trim();
                 const userType = newUserType.value;
-                if (!username || !password) return alert('Veuillez remplir tous les champs');
+                if (!username || !password) return alert('Champs requis');
                 
-                const confirmed = await showConfirm('Créer un utilisateur', `Créer l'utilisateur ${username} ?`);
+                const confirmed = await showConfirm('Créer', `Créer ${username} ?`);
                 if (!confirmed) return;
                 
                 const { error } = await supabase
                     .from('users')
                     .insert([{ username, password, user_type: userType }]);
-                    
                 if (!error) {
                     newUsername.value = '';
                     newPassword.value = '';
@@ -1890,10 +2503,11 @@
                     await loadDrivers();
                     await loadTaskAssignees();
                     await loadAdminDrivers();
+                } else {
+                    alert('Erreur: ' + error.message);
                 }
             });
 
-            // Edit User
             cancelEditUserBtn.addEventListener('click', () => {
                 editUserModal.style.display = 'none';
                 currentEditUserId = null;
@@ -1901,30 +2515,19 @@
 
             saveEditUserBtn.addEventListener('click', async () => {
                 if (!currentEditUserId) return;
-                
                 const username = editUserUsername.value.trim();
                 const password = editUserPassword.value.trim();
                 const userType = editUserType.value;
-                
                 if (!username) {
-                    alert('Le nom d\'utilisateur est requis');
+                    alert('Nom requis');
                     return;
                 }
-                
-                const updateData = {
-                    username: username,
-                    user_type: userType
-                };
-                
-                if (password) {
-                    updateData.password = password;
-                }
-                
+                const updateData = { username, user_type: userType };
+                if (password) updateData.password = password;
                 const { error } = await supabase
                     .from('users')
                     .update(updateData)
                     .eq('username', currentEditUserId);
-                    
                 if (!error) {
                     editUserModal.style.display = 'none';
                     currentEditUserId = null;
@@ -1942,7 +2545,7 @@
                     .select('username')
                     .eq('user_type', USER_TYPES.CHAUFFEUR);
                 if (data) {
-                    driverSelect.innerHTML = '<option value="">Choisir un chauffeur</option>';
+                    driverSelect.innerHTML = '<option value="">Choisir</option>';
                     data.forEach(driver => {
                         const option = document.createElement('option');
                         option.value = driver.username;
@@ -1958,7 +2561,7 @@
                     .select('username')
                     .eq('user_type', USER_TYPES.CHAUFFEUR);
                 if (data) {
-                    selectElement.innerHTML = '<option value="">Choisir un chauffeur</option>';
+                    selectElement.innerHTML = '<option value="">Choisir</option>';
                     data.forEach(driver => {
                         const option = document.createElement('option');
                         option.value = driver.username;
@@ -1978,25 +2581,23 @@
                     .eq('date', currentDate)
                     .order('created_at', { ascending: false });
                 
-                // Filtrage selon le type d'utilisateur
                 if (currentUserType === USER_TYPES.CHAUFFEUR) {
                     query = query.eq('driver', currentUser);
                 } else if (currentUserType === USER_TYPES.ADMIN && selectedDriver) {
                     query = query.eq('driver', selectedDriver);
                 }
-                // Préparateur voit toutes les commandes groupées par chauffeur
                 
                 const { data, error } = await query;
                 
                 if (data) {
-                    if (currentUserType === USER_TYPES.PREPARATEUR || (currentUserType === USER_TYPES.ADMIN && !selectedDriver)) {
-                        // Préparateur ou admin sans filtre : voir groupé par chauffeur
+                    if (currentUserType === USER_TYPES.PREPARATEUR || 
+                        currentUserType === USER_TYPES.RESPONSABLE ||
+                        (currentUserType === USER_TYPES.ADMIN && !selectedDriver)) {
                         renderOrdersGroupedByDriver(data);
                     } else {
-                        // Vue simple pour chauffeur ou admin filtré
                         renderOrdersSimple(data);
                     }
-                    updateMap(data);
+                    await updateMap(data);
                 }
                 
                 loadingMessage.style.display = 'none';
@@ -2008,10 +2609,9 @@
                     if (!byDriver[order.driver]) byDriver[order.driver] = [];
                     byDriver[order.driver].push(order);
                 });
-                
                 let html = '';
                 for (const [driver, driverOrders] of Object.entries(byDriver)) {
-                    html += `<div class="driver-group"><h4>👤 Chauffeur: ${escapeHtml(driver)}</h4>`;
+                    html += `<div class="driver-group"><h4>👤 ${escapeHtml(driver)}</h4>`;
                     driverOrders.forEach(order => {
                         html += renderOrderItem(order);
                     });
@@ -2038,26 +2638,57 @@
                 };
                 let actions = '';
                 
+                // Préparateur peut préparer les commandes
                 if (currentUserType === USER_TYPES.PREPARATEUR && order.status === ORDER_STATUS.EN_ATTENTE) {
                     actions = `<button class="btn-validate" onclick="prepareOrder('${order.id}')">✅ Préparer</button>`;
-                } else if (currentUserType === USER_TYPES.CHAUFFEUR && order.driver === currentUser) {
+                }
+                
+                // Responsable peut voir mais pas préparer
+                if (currentUserType === USER_TYPES.RESPONSABLE) {
+                    // Pas d'actions sur les commandes
+                }
+                
+                // Chauffeur peut démarrer et livrer (n'importe quel ordre)
+                if (currentUserType === USER_TYPES.CHAUFFEUR && order.driver === currentUser) {
                     if (order.status === ORDER_STATUS.PREPARE) {
-                        actions = `<button class="btn-validate" onclick="departOrder('${order.id}')">🚚 Partir</button>`;
+                        actions = `<button class="btn-validate" onclick="departOrder('${order.id}')">🚚 Démarrer</button>`;
                     } else if (order.status === ORDER_STATUS.EN_COURS) {
                         actions = `<button class="btn-validate" onclick="openSignatureModal('${order.id}')">📝 Livrer</button>`;
                     }
                 }
                 
-                // Admin actions
+                // Admin peut tout faire
                 if (currentUserType === USER_TYPES.ADMIN) {
+                    if (order.status === ORDER_STATUS.EN_ATTENTE) {
+                        actions += `<button class="btn-validate" onclick="prepareOrder('${order.id}')">✅ Préparer</button>`;
+                    }
+                    if (order.status === ORDER_STATUS.PREPARE) {
+                        actions += `<button class="btn-validate" onclick="departOrder('${order.id}')">🚚 Démarrer</button>`;
+                    }
+                    if (order.status === ORDER_STATUS.EN_COURS) {
+                        actions += `<button class="btn-validate" onclick="openSignatureModal('${order.id}')">📝 Livrer</button>`;
+                    }
                     actions += `
-                        <button class="btn-edit" onclick="editOrder('${order.id}')">✏️ Modifier</button>
-                        <button class="btn-delete" onclick="deleteOrder('${order.id}')">🗑️ Supprimer</button>
+                        <button class="btn-edit" onclick="editOrder('${order.id}')">✏️</button>
+                        <button class="btn-delete" onclick="deleteOrder('${order.id}')">🗑️</button>
                     `;
                 }
                 
+                // Retour au dépôt pour chauffeur
+                if (currentUserType === USER_TYPES.CHAUFFEUR && 
+                    order.status === ORDER_STATUS.LIVRE && 
+                    order.driver === currentUser) {
+                    const isLast = true; // À améliorer pour détecter la dernière livraison
+                    if (isLast) {
+                        actions += `<button class="btn-validate" style="background:#2196f3;" onclick="returnToDepot()">🏁 Retour dépôt</button>`;
+                    }
+                }
+                
+                // Signature visible pour admin, responsable et chauffeur
                 let signatureButton = '';
-                if (order.signature && (currentUserType === USER_TYPES.ADMIN || currentUserType === USER_TYPES.CHAUFFEUR)) {
+                if (order.signature && (currentUserType === USER_TYPES.ADMIN || 
+                                        currentUserType === USER_TYPES.RESPONSABLE || 
+                                        currentUserType === USER_TYPES.CHAUFFEUR)) {
                     signatureButton = `<button class="view-signature-btn" onclick="viewSignature('${order.signature}')">📝 Voir signature</button>`;
                 }
                 
@@ -2072,10 +2703,10 @@
                             <div>⏰ ${timeDisplay}</div>
                         </div>
                         <div class="order-meta">
-                            <span>📅 Créé par ${escapeHtml(order.created_by)} le ${formatDateTime(order.created_at)}</span>
-                            ${order.prepared_at ? `<span>📦 Préparé par ${escapeHtml(order.prepared_by)} le ${formatDateTime(order.prepared_at)}</span>` : ''}
-                            ${order.driver_departure_at ? `<span>🚚 Départ le ${formatDateTime(order.driver_departure_at)}</span>` : ''}
-                            ${order.delivered_at ? `<span>✅ Livré le ${formatDateTime(order.delivered_at)}</span>` : ''}
+                            <span>📅 ${escapeHtml(order.created_by)} ${formatDateTime(order.created_at)}</span>
+                            ${order.prepared_at ? `<span>📦 ${escapeHtml(order.prepared_by)} ${formatDateTime(order.prepared_at)}</span>` : ''}
+                            ${order.driver_departure_at ? `<span>🚚 ${formatDateTime(order.driver_departure_at)}</span>` : ''}
+                            ${order.delivered_at ? `<span>✅ ${formatDateTime(order.delivered_at)}</span>` : ''}
                         </div>
                         <div class="order-actions">
                             ${actions}
@@ -2086,18 +2717,17 @@
             }
 
             addOrderBtn.addEventListener('click', async () => {
+                if (currentUserType !== USER_TYPES.ADMIN) return;
+                
                 const name = customerName.value.trim();
                 const addr = customerAddr.value.trim();
                 const driver = driverSelect.value;
-                if (!name || !addr || !driver) return alert('Veuillez remplir tous les champs');
+                if (!name || !addr || !driver) return alert('Champs requis');
                 
-                const confirmed = await showConfirm('Ajouter une commande', `Créer la commande pour ${name} ?`);
+                const confirmed = await showConfirm('Ajouter', `Créer pour ${name} ?`);
                 if (!confirmed) return;
                 
                 const timeReq = getTimeValue();
-                
-                // Géocoder l'adresse
-                const coords = await geocodeAddress(addr);
                 
                 const orderData = {
                     customer_name: name,
@@ -2110,15 +2740,9 @@
                     status: ORDER_STATUS.EN_ATTENTE
                 };
                 
-                if (coords) {
-                    orderData.lat = coords.lat;
-                    orderData.lon = coords.lon;
-                }
-                
                 const { error } = await supabase
                     .from('orders')
                     .insert([orderData]);
-                    
                 if (!error) {
                     customerName.value = '';
                     customerAddr.value = '';
@@ -2126,7 +2750,6 @@
                 }
             });
 
-            // Edit order
             cancelEditOrderBtn.addEventListener('click', () => {
                 editOrderModal.style.display = 'none';
                 currentEditOrderId = null;
@@ -2138,29 +2761,18 @@
                 const addr = editOrderAddr.value.trim();
                 const driver = editOrderDriver.value;
                 if (!customer || !addr || !driver) {
-                    alert('Veuillez remplir tous les champs');
+                    alert('Champs requis');
                     return;
                 }
-                
-                // Géocoder la nouvelle adresse
-                const coords = await geocodeAddress(addr);
-                
                 const updateData = {
                     customer_name: customer,
                     destination: addr,
                     driver: driver
                 };
-                
-                if (coords) {
-                    updateData.lat = coords.lat;
-                    updateData.lon = coords.lon;
-                }
-                
                 const { error } = await supabase
                     .from('orders')
                     .update(updateData)
                     .eq('id', currentEditOrderId);
-                    
                 if (!error) {
                     editOrderModal.style.display = 'none';
                     currentEditOrderId = null;
@@ -2173,9 +2785,9 @@
                 const { data, error } = await supabase
                     .from('users')
                     .select('username')
-                    .in('user_type', [USER_TYPES.PREPARATEUR, USER_TYPES.CHAUFFEUR]);
+                    .in('user_type', [USER_TYPES.PREPARATEUR, USER_TYPES.CHAUFFEUR, USER_TYPES.RESPONSABLE]);
                 if (data) {
-                    taskAssignee.innerHTML = '<option value="">Choisir un responsable</option>';
+                    taskAssignee.innerHTML = '<option value="">Choisir</option>';
                     data.forEach(user => {
                         const option = document.createElement('option');
                         option.value = user.username;
@@ -2189,9 +2801,9 @@
                 const { data, error } = await supabase
                     .from('users')
                     .select('username')
-                    .in('user_type', [USER_TYPES.PREPARATEUR, USER_TYPES.CHAUFFEUR]);
+                    .in('user_type', [USER_TYPES.PREPARATEUR, USER_TYPES.CHAUFFEUR, USER_TYPES.RESPONSABLE]);
                 if (data) {
-                    selectElement.innerHTML = '<option value="">Choisir un responsable</option>';
+                    selectElement.innerHTML = '<option value="">Choisir</option>';
                     data.forEach(user => {
                         const option = document.createElement('option');
                         option.value = user.username;
@@ -2206,9 +2818,12 @@
                     .from('tasks')
                     .select('*')
                     .order('created_at', { ascending: false });
-                if (currentUserType !== USER_TYPES.ADMIN) {
+                
+                // Admin et responsable peuvent voir toutes les tâches
+                if (currentUserType !== USER_TYPES.ADMIN && currentUserType !== USER_TYPES.RESPONSABLE) {
                     query = query.eq('assigned_to', currentUser);
                 }
+                
                 const { data, error } = await query;
                 if (data) renderTasks(data);
             }
@@ -2221,18 +2836,25 @@
                     tasks.forEach(task => {
                         const isCompleted = task.completed;
                         const canComplete = !isCompleted && task.assigned_to === currentUser;
-                        const canEdit = currentUserType === USER_TYPES.ADMIN && !isCompleted;
+                        
+                        // Responsable peut modifier/supprimer ses propres tâches
+                        const canEdit = !isCompleted && 
+                            (currentUserType === USER_TYPES.ADMIN || 
+                             (currentUserType === USER_TYPES.RESPONSABLE && task.created_by === currentUser));
                         
                         let actions = '';
                         if (canComplete) {
-                            actions += `<button class="btn-validate" onclick="completeTask('${task.id}')">✅ Marquer comme fait</button>`;
+                            actions += `<button class="btn-validate" onclick="completeTask('${task.id}')">✅ Fait</button>`;
                         }
                         if (canEdit) {
                             actions += `
-                                <button class="btn-edit" onclick="editTask('${task.id}')">✏️ Modifier</button>
-                                <button class="btn-delete" onclick="deleteTask('${task.id}')">🗑️ Supprimer</button>
+                                <button class="btn-edit" onclick="editTask('${task.id}')">✏️</button>
+                                <button class="btn-delete" onclick="deleteTask('${task.id}')">🗑️</button>
                             `;
                         }
+                        
+                        // Afficher qui a créé la tâche
+                        const createdByText = task.created_by === currentUser ? '👤 Moi' : `👤 ${escapeHtml(task.created_by)}`;
                         
                         html += `
                             <div class="task-card ${isCompleted ? 'completed' : ''}">
@@ -2242,8 +2864,8 @@
                                 </div>
                                 <div class="order-meta">
                                     <span>👤 Assigné à: ${escapeHtml(task.assigned_to)}</span>
-                                    <span>📅 Créé par ${escapeHtml(task.created_by)} le ${formatDateTime(task.created_at)}</span>
-                                    ${task.completed_at ? `<span>✅ Fait le ${formatDateTime(task.completed_at)} par ${escapeHtml(task.completed_by)}</span>` : ''}
+                                    <span>📅 Créé par: ${createdByText} ${formatDateTime(task.created_at)}</span>
+                                    ${task.completed_at ? `<span>✅ Complété par: ${escapeHtml(task.completed_by)} ${formatDateTime(task.completed_at)}</span>` : ''}
                                 </div>
                                 <div class="order-actions">
                                     ${actions}
@@ -2258,9 +2880,9 @@
             addTaskBtn.addEventListener('click', async () => {
                 const description = taskDescription.value.trim();
                 const assignee = taskAssignee.value;
-                if (!description || !assignee) return alert('Veuillez remplir tous les champs');
+                if (!description || !assignee) return alert('Champs requis');
                 
-                const confirmed = await showConfirm('Ajouter une tâche', `Créer la tâche pour ${assignee} ?`);
+                const confirmed = await showConfirm('Ajouter', `Créer pour ${assignee} ?`);
                 if (!confirmed) return;
                 
                 const { error } = await supabase
@@ -2279,7 +2901,6 @@
                 }
             });
 
-            // Edit Task
             cancelEditTaskBtn.addEventListener('click', () => {
                 editTaskModal.style.display = 'none';
                 currentEditTaskId = null;
@@ -2287,15 +2908,12 @@
 
             saveEditTaskBtn.addEventListener('click', async () => {
                 if (!currentEditTaskId) return;
-                
                 const description = editTaskDescription.value.trim();
                 const assignee = editTaskAssignee.value;
-                
                 if (!description || !assignee) {
-                    alert('Veuillez remplir tous les champs');
+                    alert('Champs requis');
                     return;
                 }
-                
                 const { error } = await supabase
                     .from('tasks')
                     .update({
@@ -2303,7 +2921,6 @@
                         assigned_to: assignee
                     })
                     .eq('id', currentEditTaskId);
-                    
                 if (!error) {
                     editTaskModal.style.display = 'none';
                     currentEditTaskId = null;
@@ -2311,10 +2928,9 @@
                 }
             });
 
-            // ==================== Gestion des transports (Admin/Préparateur uniquement) ====================
+            // ==================== Gestion des transports ====================
             async function loadTransports() {
                 if (currentUserType === USER_TYPES.CHAUFFEUR) return;
-                
                 const { data, error } = await supabase
                     .from('transports')
                     .select('*')
@@ -2329,17 +2945,39 @@
                 } else {
                     transports.forEach(transport => {
                         const isDeparted = transport.departed;
-                        const canEdit = !isDeparted && (currentUserType === USER_TYPES.ADMIN || currentUserType === USER_TYPES.PREPARATEUR);
+                        
+                        // Admin peut modifier/supprimer
+                        const canEdit = !isDeparted && currentUserType === USER_TYPES.ADMIN;
+                        
+                        // Admin et préparateur peuvent marquer départ
+                        const canMarkDepart = !isDeparted && 
+                            (currentUserType === USER_TYPES.ADMIN || currentUserType === USER_TYPES.PREPARATEUR);
+                        
+                        // Responsable peut voir mais pas modifier
                         
                         let paletteInfo = '';
                         if (transport.palette_rendu !== null) {
                             if (transport.palette_rendu) {
-                                paletteInfo = '<div class="palette-info">✅ Palettes rendues</div>';
-                            } else if (transport.palette_count > 0) {
-                                paletteInfo = `<div class="palette-info">📦 Palettes non rendues: <strong>${transport.palette_count}</strong></div>`;
+                                paletteInfo = '<div class="palette-info" style="background: #c8e6c9;">✅ Toutes les palettes rendues</div>';
+                            } else {
+                                paletteInfo = '<div class="palette-info" style="background: #ffcdd2;">';
+                                if (transport.palette_count_euro > 0) {
+                                    paletteInfo += `<div class="palette-detail"><span class="palette-type">🇪🇺 Europe:</span> <span class="palette-value">${transport.palette_count_euro}</span></div>`;
+                                }
+                                if (transport.palette_count > 0) {
+                                    paletteInfo += `<div class="palette-detail"><span class="palette-type">📏 Standard:</span> <span class="palette-value">${transport.palette_count}</span></div>`;
+                                }
+                                paletteInfo += '</div>';
                             }
-                        } else if (transport.palette_count > 0) {
-                            paletteInfo = `<div class="palette-count-badge">📦 ${transport.palette_count} palette(s)</div>`;
+                        } else if (transport.palette_count > 0 || transport.palette_count_euro > 0) {
+                            paletteInfo = '<div class="palette-info">';
+                            if (transport.palette_count_euro > 0) {
+                                paletteInfo += `<div class="palette-detail"><span class="palette-type">🇪🇺 Europe:</span> <span class="palette-value">${transport.palette_count_euro}</span></div>`;
+                            }
+                            if (transport.palette_count > 0) {
+                                paletteInfo += `<div class="palette-detail"><span class="palette-type">📏 Standard:</span> <span class="palette-value">${transport.palette_count}</span></div>`;
+                            }
+                            paletteInfo += '</div>';
                         }
                         
                         html += `
@@ -2350,14 +2988,14 @@
                                 </div>
                                 <div class="order-meta">
                                     <span>📋 Réf: ${escapeHtml(transport.reference || '-')}</span>
-                                    <span>📅 Créé par ${escapeHtml(transport.created_by)} le ${formatDateTime(transport.created_at)}</span>
-                                    ${transport.departed_at ? `<span>🚚 Départ le ${formatDateTime(transport.departed_at)} par ${escapeHtml(transport.departed_by)}</span>` : ''}
+                                    <span>📅 ${escapeHtml(transport.created_by)} ${formatDateTime(transport.created_at)}</span>
+                                    ${transport.departed_at ? `<span>🚚 ${escapeHtml(transport.departed_by)} ${formatDateTime(transport.departed_at)}</span>` : ''}
                                 </div>
                                 ${paletteInfo}
                                 <div class="order-actions">
-                                    ${!isDeparted ? `<button class="btn-validate" onclick="departTransport('${transport.id}')">🚚 Partir</button>` : ''}
-                                    ${canEdit ? `<button class="btn-edit" onclick="editTransport('${transport.id}')">✏️ Modifier</button>` : ''}
-                                    ${canEdit ? `<button class="btn-delete" onclick="deleteTransport('${transport.id}')">🗑️ Supprimer</button>` : ''}
+                                    ${canMarkDepart ? `<button class="btn-validate" onclick="departTransport('${transport.id}')">🚚 Partir</button>` : ''}
+                                    ${canEdit ? `<button class="btn-edit" onclick="editTransport('${transport.id}')">✏️</button>` : ''}
+                                    ${canEdit ? `<button class="btn-delete" onclick="deleteTransport('${transport.id}')">🗑️</button>` : ''}
                                 </div>
                             </div>
                         `;
@@ -2367,16 +3005,16 @@
             }
 
             addTransportBtn.addEventListener('click', async () => {
-                if (currentUserType === USER_TYPES.CHAUFFEUR) return;
+                if (currentUserType !== USER_TYPES.ADMIN && currentUserType !== USER_TYPES.PREPARATEUR) return;
                 
                 const company = transportCompany.value;
                 const customer = transportCustomer.value.trim();
                 const reference = transportReference.value.trim();
                 const paletteCount = parseInt(transportPaletteCount.value) || 0;
                 
-                if (!customer) return alert('Veuillez entrer le nom du client');
+                if (!customer) return alert('Nom client requis');
                 
-                const confirmed = await showConfirm('Ajouter un transport', `Créer le transport pour ${customer} ?`);
+                const confirmed = await showConfirm('Ajouter', `Créer pour ${customer} ?`);
                 if (!confirmed) return;
                 
                 const { error } = await supabase
@@ -2404,8 +3042,7 @@
             });
 
             saveEditTransportBtn.addEventListener('click', async () => {
-                if (currentUserType === USER_TYPES.CHAUFFEUR || !currentTransportId) return;
-                
+                if (currentUserType !== USER_TYPES.ADMIN || !currentTransportId) return;
                 const { error } = await supabase
                     .from('transports')
                     .update({
@@ -2425,8 +3062,8 @@
             // ==================== Signature ====================
             function initSignaturePad() {
                 signaturePad = new SignaturePad(signatureCanvas, {
-                    backgroundColor: 'rgb(255, 255, 255)',
-                    penColor: 'rgb(0, 0, 0)'
+                    backgroundColor: 'rgb(255,255,255)',
+                    penColor: 'rgb(0,0,0)'
                 });
                 function resizeCanvas() {
                     const ratio = Math.max(window.devicePixelRatio || 1, 1);
@@ -2448,11 +3085,11 @@
 
             saveSignatureBtn.addEventListener('click', async () => {
                 if (!currentOrderId || !signaturePad || signaturePad.isEmpty()) {
-                    alert('Veuillez signer');
+                    alert('Signez svp');
                     return;
                 }
                 
-                const confirmed = await showConfirm('Valider la signature', 'Confirmer la livraison avec cette signature ?');
+                const confirmed = await showConfirm('Valider', 'Confirmer la livraison ?');
                 if (!confirmed) return;
                 
                 const signatureData = signaturePad.toDataURL();
@@ -2464,6 +3101,7 @@
                         signature: signatureData
                     })
                     .eq('id', currentOrderId);
+                    
                 if (!error) {
                     signatureModal.style.display = 'none';
                     currentOrderId = null;
@@ -2472,148 +3110,7 @@
                 }
             });
 
-            // ==================== Carte ====================
-            function initMap() {
-                if (!map) {
-                    map = L.map('map').setView([START_POINT.lat, START_POINT.lon], 11);
-                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                        attribution: '© OpenStreetMap contributors'
-                    }).addTo(map);
-                    L.marker([START_POINT.lat, START_POINT.lon], {
-                        icon: L.divIcon({ className: 'start-marker', html: '🚩', iconSize: [30, 30] })
-                    }).addTo(map).bindPopup('Départ');
-                }
-            }
-
-            async function updateMap(orders) {
-                if (!map || currentUserType === USER_TYPES.PREPARATEUR) return;
-                mapMarkers.forEach(marker => map.removeLayer(marker));
-                mapMarkers = [];
-                orders.forEach(order => {
-                    if (order.lat && order.lon) {
-                        const markerColor = order.status === ORDER_STATUS.LIVRE ? 'green' : 'red';
-                        const marker = L.marker([order.lat, order.lon], {
-                            icon: L.divIcon({
-                                className: 'customer-marker',
-                                html: `<div style="background:${markerColor}; width:20px; height:20px; border-radius:50%; border:2px solid white;"></div>`,
-                                iconSize: [20, 20]
-                            })
-                        }).addTo(map);
-                        marker.bindPopup(`
-                            <strong>${escapeHtml(order.customer_name)}</strong><br>
-                            📍 ${escapeHtml(order.destination)}<br>
-                            ⏰ ${formatTimeRequirement(order)}<br>
-                            ${order.status === ORDER_STATUS.LIVRE ? '✅ Livré' : '⏳ En attente'}
-                        `);
-                        mapMarkers.push(marker);
-                    }
-                });
-            }
-
-            // ==================== Optimisation d'itinéraire ====================
-         // ==================== Optimisation d'itinéraire ====================
-optimizeBtn.addEventListener('click', async () => {
-    let query = supabase
-        .from('orders')
-        .select('*')
-        .eq('date', currentDate)
-        .neq('status', ORDER_STATUS.LIVRE);
-    
-    // Filtrer selon le type d'utilisateur
-    if (currentUserType === USER_TYPES.CHAUFFEUR) {
-        query = query.eq('driver', currentUser);
-    } else if (currentUserType === USER_TYPES.ADMIN && selectedDriver) {
-        query = query.eq('driver', selectedDriver);
-    } else if (currentUserType === USER_TYPES.ADMIN && !selectedDriver) {
-        alert('Veuillez sélectionner un chauffeur pour voir son itinéraire');
-        return;
-    } else if (currentUserType === USER_TYPES.PREPARATEUR) {
-        alert('Les préparateurs n\'ont pas accès à l\'optimisation d\'itinéraire');
-        return;
-    }
-    
-    const { data: orders, error } = await query;
-        
-    if (!orders || orders.length === 0) {
-        alert('Aucune livraison à planifier');
-        return;
-    }
-    
-    routeStatus.innerHTML = '🔄 Calcul...';
-    
-    const withCoords = orders.filter(o => o.lat && o.lon);
-    const withoutCoords = orders.filter(o => !o.lat || !o.lon);
-    
-    // Tri par priorité (heure de début)
-    withCoords.sort((a, b) => (getStartTimeMinutes(a) - getStartTimeMinutes(b)));
-    
-    // Algorithme du plus proche voisin
-    let finalRoute = [];
-    let remaining = [...withCoords];
-    
-    if (remaining.length > 0) {
-        finalRoute.push(remaining[0]);
-        remaining = remaining.slice(1);
-    }
-    
-    while (remaining.length > 0) {
-        const current = finalRoute[finalRoute.length - 1];
-        let bestIdx = 0;
-        let bestDist = Infinity;
-        
-        for (let i = 0; i < remaining.length; i++) {
-            if (current.lat && current.lon && remaining[i].lat && remaining[i].lon) {
-                const dist = calculateDistance(
-                    current.lat, current.lon,
-                    remaining[i].lat, remaining[i].lon
-                );
-                if (dist < bestDist) {
-                    bestDist = dist;
-                    bestIdx = i;
-                }
-            }
-        }
-        finalRoute.push(remaining[bestIdx]);
-        remaining = remaining.filter((_, i) => i !== bestIdx);
-    }
-    
-    finalRoute = [...finalRoute, ...withoutCoords];
-    
-    let stepsHtml = '';
-    let prevLat = START_POINT.lat;
-    let prevLon = START_POINT.lon;
-    let startTime = new Date();
-    startTime.setHours(9, 0, 0);
-    let currentTime = new Date(startTime);
-    
-    finalRoute.forEach((order, idx) => {
-        let distanceText = '';
-        if (prevLat && prevLon && order.lat && order.lon) {
-            const dist = calculateDistance(prevLat, prevLon, order.lat, order.lon);
-            const travelTime = Math.round(dist / 30 * 60);
-            const deliveryTime = 30; // 30 minutes par défaut
-            
-            currentTime.setMinutes(currentTime.getMinutes() + travelTime + deliveryTime);
-            const arrivalTime = currentTime.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-            
-            distanceText = `<br><small>🚗 ${dist.toFixed(1)} km, 🕒 Arrivée: ${arrivalTime}</small>`;
-            prevLat = order.lat;
-            prevLon = order.lon;
-        }
-        
-        stepsHtml += `
-            <li>
-                <span style="background:#f09b4b; color:white; width:28px; height:28px; display:inline-flex; align-items:center; justify-content:center; border-radius:50%; margin-right:10px;">${idx+1}</span>
-                <strong>${escapeHtml(order.customer_name)}</strong><br>
-                📍 ${escapeHtml(order.destination)}${distanceText}
-            </li>
-        `;
-    });
-    
-    routeStepsList.innerHTML = stepsHtml;
-    routeStatus.innerHTML = '✅ Itinéraire généré';
-});
-            // ==================== Sélecteur de chauffeur pour admin ====================
+            // ==================== Sélecteur admin ====================
             if (adminDriverSelect) {
                 adminDriverSelect.addEventListener('change', (e) => {
                     selectedDriver = e.target.value || null;
@@ -2621,7 +3118,7 @@ optimizeBtn.addEventListener('click', async () => {
                 });
             }
 
-            // ==================== Fonctions utilitaires ====================
+            // ==================== Utilitaires ====================
             function getTimeValue() {
                 const type = timeType.value;
                 if (type === 'fixed') {
@@ -2651,47 +3148,27 @@ optimizeBtn.addEventListener('click', async () => {
                 if (!order.time_req) return '⏰ Libre';
                 if (order.time_req.type === 'fixed') return `⏰ ${order.time_req.value}`;
                 if (order.time_req.type === 'before') return `⏰ avant ${order.time_req.value}`;
-                if (order.time_req.type === 'range') return `⏰ ${order.time_req.value.start} - ${order.time_req.value.end}`;
+                if (order.time_req.type === 'range') return `⏰ ${order.time_req.value.start}-${order.time_req.value.end}`;
                 return '⏰ Libre';
             }
 
             function formatDateTime(timestamp) {
                 if (!timestamp) return '';
                 const date = new Date(timestamp);
-                return date.toLocaleString('fr-FR', {
-                    day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
-                });
+                return date.toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
             }
 
             function escapeHtml(unsafe) {
                 if (!unsafe) return '';
-                return unsafe
-                    .replace(/&/g, "&amp;")
-                    .replace(/</g, "&lt;")
-                    .replace(/>/g, "&gt;")
-                    .replace(/"/g, "&quot;")
-                    .replace(/'/g, "&#039;");
+                return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
             }
 
-            function calculateDistance(lat1, lon1, lat2, lon2) {
-                const R = 6371;
-                const dLat = (lat2 - lat1) * Math.PI / 180;
-                const dLon = (lon2 - lon1) * Math.PI / 180;
-                const a = 
-                    Math.sin(dLat/2) * Math.sin(dLat/2) +
-                    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
-                    Math.sin(dLon/2) * Math.sin(dLon/2);
-                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-                return R * c;
-            }
-
-            // ==================== Changement de date ====================
+            // ==================== Événements ====================
             inputDatePicker.addEventListener('change', (e) => {
                 currentDate = e.target.value;
                 loadOrders();
             });
 
-            // ==================== Onglets ====================
             document.querySelectorAll('.tab-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
                     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -2701,7 +3178,6 @@ optimizeBtn.addEventListener('click', async () => {
                 });
             });
 
-            // ==================== Initialisation ====================
             setDefaultDate();
             if (timeType) renderTimeInput();
         })();
