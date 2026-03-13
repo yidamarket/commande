@@ -3181,6 +3181,180 @@
             setDefaultDate();
             if (timeType) renderTimeInput();
         })();
+
+          // Service Worker注册和更新管理
+  (function() {
+    if ('serviceWorker' in navigator) {
+      let swRegistration = null;
+      
+      // 注册Service Worker
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js')
+          .then(registration => {
+            swRegistration = registration;
+            console.log('Service Worker注册成功:', registration.scope);
+            
+            // 检查是否有等待中的Service Worker
+            if (registration.waiting) {
+              console.log('有等待中的Service Worker');
+              notifyUpdateReady(registration.waiting);
+            }
+            
+            // 监听更新
+            registration.addEventListener('updatefound', () => {
+              console.log('发现新的Service Worker');
+              const newWorker = registration.installing;
+              
+              newWorker.addEventListener('statechange', () => {
+                console.log('Service Worker状态变化:', newWorker.state);
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  console.log('新版本已安装，等待激活');
+                  notifyUpdateReady(newWorker);
+                }
+              });
+            });
+          })
+          .catch(error => {
+            console.log('Service Worker注册失败:', error);
+          });
+        
+        // 监听控制器变化
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          console.log('控制器变化，重新加载页面');
+          window.location.reload();
+        });
+        
+        // 定期检查更新（每小时）
+        setInterval(() => {
+          if (swRegistration) {
+            console.log('检查更新...');
+            swRegistration.update();
+          }
+        }, 60 * 60 * 1000);
+      });
+      
+      // 通知用户更新
+      function notifyUpdateReady(worker) {
+        // 检查是否已经显示过通知
+        if (document.getElementById('update-notification')) return;
+        
+        const notification = document.createElement('div');
+        notification.id = 'update-notification';
+        notification.style.cssText = `
+          position: fixed;
+          bottom: 20px;
+          right: 20px;
+          background: #2f6d9e;
+          color: white;
+          padding: 16px 24px;
+          border-radius: 40px;
+          box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+          z-index: 9999;
+          display: flex;
+          align-items: center;
+          gap: 15px;
+          animation: slideIn 0.3s ease;
+          font-family: 'Segoe UI', Roboto, sans-serif;
+        `;
+        
+        notification.innerHTML = `
+          <span style="font-size: 1.1rem;">🔄 Nouvelle version disponible</span>
+          <button onclick="updateApp()" style="
+            background: white;
+            color: #2f6d9e;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 30px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+          " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">Mettre à jour</button>
+          <button onclick="dismissUpdate(this)" style="
+            background: transparent;
+            color: white;
+            border: 1px solid rgba(255,255,255,0.5);
+            padding: 8px 12px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+          " onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='transparent'">Plus tard</button>
+        `;
+        
+        // 添加动画样式
+        if (!document.getElementById('sw-animations')) {
+          const style = document.createElement('style');
+          style.id = 'sw-animations';
+          style.textContent = `
+            @keyframes slideIn {
+              from { transform: translateX(100%); opacity: 0; }
+              to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOut {
+              from { transform: translateX(0); opacity: 1; }
+              to { transform: translateX(100%); opacity: 0; }
+            }
+          `;
+          document.head.appendChild(style);
+        }
+        
+        document.body.appendChild(notification);
+      }
+      
+      // 全局函数：更新应用
+      window.updateApp = function() {
+        console.log('用户点击更新');
+        if (swRegistration && swRegistration.waiting) {
+          // 发送消息给等待中的Service Worker
+          swRegistration.waiting.postMessage({ type: 'SKIP_WAITING' });
+        } else {
+          // 如果没有等待中的，检查更新
+          swRegistration.update();
+        }
+        dismissUpdate();
+      };
+      
+      // 全局函数：关闭通知
+      window.dismissUpdate = function(btn) {
+        const notification = document.getElementById('update-notification');
+        if (notification) {
+          notification.style.animation = 'slideOut 0.3s ease';
+          notification.style.transform = 'translateX(100%)';
+          notification.style.opacity = '0';
+          setTimeout(() => notification.remove(), 300);
+        }
+      };
+      
+      // 手动检查更新
+      window.checkForUpdates = function() {
+        if (swRegistration) {
+          console.log('手动检查更新');
+          swRegistration.update();
+        }
+      };
+      
+      // 获取当前版本
+      window.getVersion = function() {
+        if (navigator.serviceWorker.controller) {
+          const channel = new MessageChannel();
+          navigator.serviceWorker.controller.postMessage({ type: 'GET_VERSION' }, [channel.port2]);
+          channel.port1.onmessage = (event) => {
+            console.log('当前版本:', event.data.version);
+            alert('Version: ' + event.data.version);
+          };
+        } else {
+          alert('Service Worker未激活');
+        }
+      };
+      
+      // 添加调试命令到控制台
+      console.log('Service Worker调试命令:');
+      console.log('  - checkForUpdates() : 检查更新');
+      console.log('  - getVersion() : 显示当前版本');
+    }
+  })();
     </script>
 </body>
 </html>
